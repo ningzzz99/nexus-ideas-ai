@@ -3,6 +3,7 @@ import { ReactFlow, Node, Edge, Background, Controls, MiniMap, useNodesState, us
 import '@xyflow/react/dist/style.css';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { MindMapToolbar } from './MindMapToolbar';
 import { useToast } from '@/hooks/use-toast';
@@ -42,6 +43,8 @@ export function MindMap({ sessionId }: MindMapProps) {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [isConnectMode, setIsConnectMode] = useState(false);
   const [connectSource, setConnectSource] = useState<string | null>(null);
+  const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState("");
   const { toast } = useToast();
 
   const loadMindMap = useCallback(async () => {
@@ -195,6 +198,35 @@ export function MindMap({ sessionId }: MindMapProps) {
     [isConnectMode, connectSource, sessionId, toast]
   );
 
+  const handleNodeDoubleClick = useCallback(
+    (_event: any, node: Node) => {
+      setEditingNodeId(node.id);
+      setEditingText(node.data.label as string);
+    },
+    []
+  );
+
+  const handleSaveNodeEdit = useCallback(async () => {
+    if (!editingNodeId || !editingText.trim()) {
+      setEditingNodeId(null);
+      return;
+    }
+
+    try {
+      await supabase
+        .from('mind_map_nodes')
+        .update({ label: editingText.trim() })
+        .eq('id', editingNodeId);
+
+      toast({ title: 'Node updated' });
+      setEditingNodeId(null);
+      setEditingText("");
+    } catch (error) {
+      console.error('Error updating node:', error);
+      toast({ title: 'Error updating node', variant: 'destructive' });
+    }
+  }, [editingNodeId, editingText, toast]);
+
   const handleDeleteSelected = useCallback(async () => {
     if (!selectedNodeId) return;
 
@@ -277,7 +309,7 @@ export function MindMap({ sessionId }: MindMapProps) {
         isConnectMode={isConnectMode}
         selectedNodeId={selectedNodeId}
       />
-      <div className="flex-1">
+      <div className="flex-1 relative">
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -285,12 +317,41 @@ export function MindMap({ sessionId }: MindMapProps) {
           onEdgesChange={onEdgesChange}
           onNodeDragStop={handleNodeDragStop}
           onNodeClick={handleNodeClick}
+          onNodeDoubleClick={handleNodeDoubleClick}
           fitView
         >
           <Background />
           <Controls />
           <MiniMap />
         </ReactFlow>
+        
+        {editingNodeId && (
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-card border rounded-lg p-3 shadow-lg z-50 min-w-[300px]">
+            <p className="text-sm font-semibold mb-2">Edit Node Text</p>
+            <input
+              type="text"
+              value={editingText}
+              onChange={(e) => setEditingText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSaveNodeEdit();
+                if (e.key === 'Escape') setEditingNodeId(null);
+              }}
+              className="w-full px-3 py-2 border rounded mb-2"
+              autoFocus
+            />
+            <div className="flex gap-2 justify-end">
+              <Button size="sm" variant="outline" onClick={() => setEditingNodeId(null)}>
+                Cancel
+              </Button>
+              <Button size="sm" onClick={handleSaveNodeEdit}>
+                Save
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Press Enter to save, Escape to cancel
+            </p>
+          </div>
+        )}
       </div>
     </Card>
   );
