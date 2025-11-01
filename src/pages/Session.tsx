@@ -235,7 +235,7 @@ export default function Session() {
             }
           }
 
-          const { data: newNode } = await supabase
+          await supabase
             .from('mind_map_nodes')
             .insert({
               session_id: session!.id,
@@ -244,27 +244,7 @@ export default function Session() {
               y_position: nodeY,
               agent_type: agentType,
               message_id: messageId,
-            })
-            .select()
-            .single();
-
-          if (newNode && concept.connections?.length > 0) {
-            const { data: existingNodesForEdges } = await supabase
-              .from('mind_map_nodes')
-              .select('id, label')
-              .eq('session_id', session!.id)
-              .in('label', concept.connections);
-
-            if (existingNodesForEdges) {
-              for (const targetNode of existingNodesForEdges) {
-                await supabase.from('mind_map_edges').insert({
-                  session_id: session!.id,
-                  source_node_id: targetNode.id,
-                  target_node_id: newNode.id,
-                });
-              }
-            }
-          }
+            });
         }
       }
     } catch (error: any) {
