@@ -210,6 +210,16 @@ export function MindMap({ sessionId, sessionGoal, sessionTitle }: MindMapProps) 
 
   const handleNodeClick = useCallback(
     async (_event: any, node: Node) => {
+      // Don't allow selecting or connecting the central topic
+      if (node.id === 'central-topic') {
+        toast({ 
+          title: 'Central topic cannot be connected',
+          description: 'Connect the idea nodes to each other instead',
+          variant: 'default'
+        });
+        return;
+      }
+
       if (isConnectMode) {
         if (!connectSource) {
           setConnectSource(node.id);
