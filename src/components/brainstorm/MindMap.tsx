@@ -110,6 +110,16 @@ export function MindMap({ sessionId, sessionGoal, sessionTitle }: MindMapProps) 
           target: edge.target_node_id,
           type: 'smoothstep',
           animated: true,
+          style: {
+            stroke: '#222',
+            strokeWidth: 3,
+          },
+          markerEnd: {
+            type: 'arrowclosed',
+            width: 20,
+            height: 20,
+            color: '#222',
+          },
         }));
         setEdges(flowEdges);
       }
