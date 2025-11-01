@@ -57,6 +57,26 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        spark: {
+          DEFAULT: "hsl(var(--spark))",
+          foreground: "hsl(var(--spark-foreground))",
+          light: "hsl(var(--spark-light))",
+        },
+        probe: {
+          DEFAULT: "hsl(var(--probe))",
+          foreground: "hsl(var(--probe-foreground))",
+          light: "hsl(var(--probe-light))",
+        },
+        facilitator: {
+          DEFAULT: "hsl(var(--facilitator))",
+          foreground: "hsl(var(--facilitator-foreground))",
+          light: "hsl(var(--facilitator-light))",
+        },
+        anchor: {
+          DEFAULT: "hsl(var(--anchor))",
+          foreground: "hsl(var(--anchor-foreground))",
+          light: "hsl(var(--anchor-light))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
