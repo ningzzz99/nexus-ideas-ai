@@ -216,16 +216,32 @@ export default function Session() {
 
       if (data.concepts && data.concepts.length > 0) {
         for (const concept of data.concepts) {
-          const randomX = Math.random() * 600;
-          const randomY = Math.random() * 400;
+          let nodeX = Math.random() * 600;
+          let nodeY = Math.random() * 400;
+
+          // If this concept has parent connections, position it near the parent
+          if (concept.connections?.length > 0) {
+            const { data: parentNodes } = await supabase
+              .from('mind_map_nodes')
+              .select('x_position, y_position')
+              .eq('session_id', session!.id)
+              .in('label', concept.connections);
+
+            if (parentNodes && parentNodes.length > 0) {
+              // Position near the first parent with some offset
+              const parent = parentNodes[0];
+              nodeX = parent.x_position + (Math.random() * 200 - 100);
+              nodeY = parent.y_position + (Math.random() * 200 - 100);
+            }
+          }
 
           const { data: newNode } = await supabase
             .from('mind_map_nodes')
             .insert({
               session_id: session!.id,
               label: concept.label,
-              x_position: randomX,
-              y_position: randomY,
+              x_position: nodeX,
+              y_position: nodeY,
               agent_type: agentType,
               message_id: messageId,
             })
@@ -243,8 +259,8 @@ export default function Session() {
               for (const targetNode of existingNodesForEdges) {
                 await supabase.from('mind_map_edges').insert({
                   session_id: session!.id,
-                  source_node_id: newNode.id,
-                  target_node_id: targetNode.id,
+                  source_node_id: targetNode.id,
+                  target_node_id: newNode.id,
                 });
               }
             }

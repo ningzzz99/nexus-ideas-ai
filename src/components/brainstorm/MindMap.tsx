@@ -116,12 +116,6 @@ export function MindMap({ sessionId, sessionGoal, sessionTitle }: MindMapProps) 
             strokeDasharray: '5,5',
             filter: 'url(#sketch)',
           },
-          markerEnd: {
-            type: 'arrow',
-            width: 25,
-            height: 25,
-            color: '#222',
-          },
         }));
         setEdges(flowEdges);
       }

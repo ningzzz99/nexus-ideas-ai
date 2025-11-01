@@ -28,23 +28,31 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a concept extraction expert for mind mapping. Extract 1-3 key concepts or ideas from messages.
+            content: `You are a concept extraction expert for mind mapping. Extract 1-3 key concepts from messages and identify parent-child relationships.
             
 Existing concepts: ${existingNodes.map((n: any) => n.label).join(', ')}
 
-Return ONLY concepts that are NEW and not duplicates of existing ones. If the message doesn't add new concepts, return empty array.
+RULES:
+1. If the message ELABORATES on an existing concept, mark it as a child of that concept in "connections"
+2. If the message introduces a NEW concept, connections can be empty
+3. Return ONLY concepts that are NEW - no duplicates
+4. Keep labels concise (2-4 words)
 
-Format: Return a JSON object with "concepts" array containing objects with:
-- label: concise concept name (2-4 words max)
-- connections: array of existing concept labels this relates to
+When someone says "for [existing concept]..." or "regarding [existing concept]..." or describes/expands an existing idea, that's elaboration.
 
-Example:
-{
-  "concepts": [
-    {"label": "Real-time sync", "connections": ["Database"]},
-    {"label": "AI automation", "connections": []}
-  ]
-}`
+Format: Return a JSON object with "concepts" array:
+- label: concept name (2-4 words)
+- connections: array of parent concept labels this elaborates on
+
+Examples:
+Message: "For the rewards program, we need tiered benefits"
+→ {"concepts": [{"label": "Tiered Benefits", "connections": ["Rewards Program"]}]}
+
+Message: "What about a mobile app?"
+→ {"concepts": [{"label": "Mobile App", "connections": []}]}
+
+Message: "The gamification could include daily challenges"
+→ {"concepts": [{"label": "Daily Challenges", "connections": ["Gamification"]}]}`
           },
           { role: 'user', content: message }
         ],
