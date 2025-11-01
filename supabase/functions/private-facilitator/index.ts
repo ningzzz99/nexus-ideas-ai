@@ -32,9 +32,12 @@ serve(async (req) => {
       .eq('id', sessionId)
       .single();
 
-    // Check if user is asking to share (yes/no response)
-    const isYesResponse = /^(yes|yeah|yep|sure|ok|okay|y|share|post)/i.test(userMessage.trim());
-    const isNoResponse = /^(no|nah|nope|n|don't|dont)/i.test(userMessage.trim());
+    // Check if user is explicitly requesting to share something
+    const shareRequestMatch = userMessage.match(/^share\s+(.+)$/i);
+    
+    // Check if user is confirming (yes/no response)
+    const isYesResponse = /^(yes|yeah|yep|sure|ok|okay|y)$/i.test(userMessage.trim());
+    const isNoResponse = /^(no|nah|nope|n|don't|dont)$/i.test(userMessage.trim());
 
     // Find the last facilitator message asking about sharing
     const lastFacilitatorMsg = conversationHistory
@@ -47,7 +50,19 @@ serve(async (req) => {
     let systemPrompt = "";
     let shouldShareToGroup = false;
 
-    if (isAskingToShare && isYesResponse) {
+    if (shareRequestMatch) {
+      // User said "share [something]" - ask for confirmation first
+      const ideaToShare = shareRequestMatch[1];
+      
+      return new Response(
+        JSON.stringify({ 
+          reply: `Just to confirm - would you like me to share "${ideaToShare}" with the group anonymously?`,
+          shared: false 
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+
+    } else if (isAskingToShare && isYesResponse) {
       // User said yes to sharing - create facilitator message
       shouldShareToGroup = true;
       
