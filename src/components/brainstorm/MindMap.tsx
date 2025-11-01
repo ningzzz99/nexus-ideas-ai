@@ -65,14 +65,15 @@ export function MindMap({ sessionId, sessionGoal, sessionTitle }: MindMapProps) 
           data: { label: node.label },
           style: {
             background: node.highlight_color || (node.agent_type ? agentColors[node.agent_type] : agentColors.user),
-            color: '#F0F4F8',
-            border: '2px solid #3B82F6',
+            color: '#FFFFFF',
+            border: '3px solid #60A5FA',
             borderRadius: '8px',
-            padding: '10px',
-            fontSize: '12px',
+            padding: '12px',
+            fontSize: '14px',
             fontWeight: 'bold',
             textDecoration: node.is_cancelled ? 'line-through' : 'none',
             opacity: node.is_cancelled ? 0.6 : 1,
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)',
           },
         }));
 
@@ -84,11 +85,11 @@ export function MindMap({ sessionId, sessionGoal, sessionTitle }: MindMapProps) 
           data: { label: sessionTitle },
           style: {
             background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
-            color: '#F0F4F8',
-            border: '3px solid #60A5FA',
+            color: '#FFFFFF',
+            border: '4px solid #60A5FA',
             borderRadius: '50%',
             padding: '20px',
-            fontSize: '16px',
+            fontSize: '18px',
             fontWeight: 'bold',
             width: '200px',
             height: '200px',
@@ -96,7 +97,7 @@ export function MindMap({ sessionId, sessionGoal, sessionTitle }: MindMapProps) 
             alignItems: 'center',
             justifyContent: 'center',
             textAlign: 'center',
-            boxShadow: '0 0 25px rgba(59, 130, 246, 0.6)',
+            boxShadow: '0 0 35px rgba(59, 130, 246, 0.8)',
           },
           draggable: false,
           selectable: false,
@@ -114,9 +115,8 @@ export function MindMap({ sessionId, sessionGoal, sessionTitle }: MindMapProps) 
           animated: false,
           style: {
             stroke: '#60A5FA',
-            strokeWidth: 3,
-            strokeDasharray: '5,5',
-            filter: 'url(#sketch)',
+            strokeWidth: 4,
+            strokeDasharray: '0',
           },
         }));
         setEdges(flowEdges);
@@ -404,15 +404,8 @@ export function MindMap({ sessionId, sessionGoal, sessionTitle }: MindMapProps) 
           onNodeDoubleClick={handleNodeDoubleClick}
           fitView
         >
-          <defs>
-            <filter id="sketch">
-              <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="3" result="noise" />
-              <feDisplacementMap in="SourceGraphic" in2="noise" scale="2" xChannelSelector="R" yChannelSelector="G" />
-            </filter>
-          </defs>
           <Background />
           <Controls />
-          <MiniMap />
         </ReactFlow>
         
         {editingNodeId && (
