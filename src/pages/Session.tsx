@@ -406,8 +406,6 @@ export default function Session() {
           sessionUrl={session.session_url}
           onEndSession={handleEndSession}
           participantCount={participantCount}
-          onSendDM={handleSendDM}
-          dmDisabled={sending}
         />
 
         <ScrollArea className="flex-1 p-4">
