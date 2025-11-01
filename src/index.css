@@ -8,108 +8,115 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Dark purple/blue futuristic theme */
-    --background: 252 47% 11%;
-    --foreground: 252 31% 92%;
+    /* Base colors - dark navy blue/black theme */
+    --background: 220 30% 8%;
+    --foreground: 210 40% 95%;
 
-    --card: 252 50% 8%;
-    --card-foreground: 252 31% 92%;
+    --card: 220 30% 10%;
+    --card-foreground: 210 40% 95%;
 
-    --popover: 252 50% 8%;
-    --popover-foreground: 252 31% 92%;
+    --popover: 220 30% 10%;
+    --popover-foreground: 210 40% 95%;
 
-    --primary: 261 100% 70%;
-    --primary-foreground: 252 47% 11%;
+    --primary: 210 100% 60%;
+    --primary-foreground: 220 30% 8%;
 
-    --secondary: 252 50% 16%;
-    --secondary-foreground: 252 31% 92%;
+    --secondary: 220 40% 15%;
+    --secondary-foreground: 210 40% 95%;
 
-    --muted: 252 35% 20%;
-    --muted-foreground: 252 20% 65%;
+    --muted: 220 30% 18%;
+    --muted-foreground: 210 30% 70%;
 
-    --accent: 220 100% 60%;
-    --accent-foreground: 252 31% 92%;
+    --accent: 200 100% 55%;
+    --accent-foreground: 220 30% 8%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 252 31% 92%;
+    --destructive-foreground: 210 40% 95%;
 
-    --border: 252 30% 25%;
-    --input: 252 30% 25%;
-    --ring: 261 100% 70%;
+    --border: 220 30% 20%;
+    --input: 220 30% 20%;
+    --ring: 210 100% 60%;
 
     --radius: 0.75rem;
 
-    /* Agent colors - futuristic neon */
-    --spark: 335 100% 65%;
-    --spark-foreground: 252 47% 11%;
-    --spark-light: 335 60% 20%;
+    /* Agent colors - neon accents on dark */
+    --spark: 340 100% 65%;
+    --spark-foreground: 220 30% 8%;
+    --spark-light: 340 60% 18%;
 
-    --probe: 190 100% 60%;
-    --probe-foreground: 252 47% 11%;
-    --probe-light: 190 60% 20%;
+    --probe: 180 100% 55%;
+    --probe-foreground: 220 30% 8%;
+    --probe-light: 180 60% 18%;
 
-    --facilitator: 160 100% 50%;
-    --facilitator-foreground: 252 47% 11%;
-    --facilitator-light: 160 60% 20%;
+    --facilitator: 150 100% 50%;
+    --facilitator-foreground: 220 30% 8%;
+    --facilitator-light: 150 60% 18%;
 
-    --anchor: 270 100% 70%;
-    --anchor-foreground: 252 47% 11%;
-    --anchor-light: 270 60% 20%;
+    --anchor: 270 100% 65%;
+    --anchor-foreground: 220 30% 8%;
+    --anchor-light: 270 60% 18%;
 
-    /* Futuristic gradients */
-    --gradient-spark: linear-gradient(135deg, hsl(335 100% 65%) 0%, hsl(345 100% 70%) 100%);
-    --gradient-probe: linear-gradient(135deg, hsl(190 100% 60%) 0%, hsl(200 100% 65%) 100%);
-    --gradient-facilitator: linear-gradient(135deg, hsl(160 100% 50%) 0%, hsl(170 100% 55%) 100%);
-    --gradient-anchor: linear-gradient(135deg, hsl(270 100% 70%) 0%, hsl(280 100% 75%) 100%);
+    /* Gradients */
+    --gradient-spark: linear-gradient(135deg, hsl(340 100% 65%) 0%, hsl(350 100% 70%) 100%);
+    --gradient-probe: linear-gradient(135deg, hsl(180 100% 55%) 0%, hsl(190 100% 60%) 100%);
+    --gradient-facilitator: linear-gradient(135deg, hsl(150 100% 50%) 0%, hsl(160 100% 55%) 100%);
+    --gradient-anchor: linear-gradient(135deg, hsl(270 100% 65%) 0%, hsl(280 100% 70%) 100%);
 
-    --sidebar-background: 252 50% 8%;
-    --sidebar-foreground: 252 31% 92%;
-    --sidebar-primary: 261 100% 70%;
-    --sidebar-primary-foreground: 252 47% 11%;
-    --sidebar-accent: 252 50% 16%;
-    --sidebar-accent-foreground: 252 31% 92%;
-    --sidebar-border: 252 30% 25%;
-    --sidebar-ring: 261 100% 70%;
+    /* Dynamic background gradient */
+    --bg-gradient: linear-gradient(135deg, hsl(220 30% 8%) 0%, hsl(230 35% 12%) 50%, hsl(220 30% 8%) 100%);
+
+    /* Shadows with subtle glow */
+    --shadow-glow: 0 0 20px hsl(210 100% 60% / 0.2);
+    --shadow-intense: 0 0 30px hsl(210 100% 60% / 0.4);
+
+    --sidebar-background: 220 30% 10%;
+    --sidebar-foreground: 210 40% 95%;
+    --sidebar-primary: 210 100% 60%;
+    --sidebar-primary-foreground: 220 30% 8%;
+    --sidebar-accent: 220 40% 15%;
+    --sidebar-accent-foreground: 210 40% 95%;
+    --sidebar-border: 220 30% 20%;
+    --sidebar-ring: 210 100% 60%;
   }
 
   .dark {
     /* Same as root for dark theme consistency */
-    --background: 252 47% 11%;
-    --foreground: 252 31% 92%;
+    --background: 220 30% 8%;
+    --foreground: 210 40% 95%;
 
-    --card: 252 50% 8%;
-    --card-foreground: 252 31% 92%;
+    --card: 220 30% 10%;
+    --card-foreground: 210 40% 95%;
 
-    --popover: 252 50% 8%;
-    --popover-foreground: 252 31% 92%;
+    --popover: 220 30% 10%;
+    --popover-foreground: 210 40% 95%;
 
-    --primary: 261 100% 70%;
-    --primary-foreground: 252 47% 11%;
+    --primary: 210 100% 60%;
+    --primary-foreground: 220 30% 8%;
 
-    --secondary: 252 50% 16%;
-    --secondary-foreground: 252 31% 92%;
+    --secondary: 220 40% 15%;
+    --secondary-foreground: 210 40% 95%;
 
-    --muted: 252 35% 20%;
-    --muted-foreground: 252 20% 65%;
+    --muted: 220 30% 18%;
+    --muted-foreground: 210 30% 70%;
 
-    --accent: 220 100% 60%;
-    --accent-foreground: 252 31% 92%;
+    --accent: 200 100% 55%;
+    --accent-foreground: 220 30% 8%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 252 31% 92%;
+    --destructive-foreground: 210 40% 95%;
 
-    --border: 252 30% 25%;
-    --input: 252 30% 25%;
-    --ring: 261 100% 70%;
+    --border: 220 30% 20%;
+    --input: 220 30% 20%;
+    --ring: 210 100% 60%;
 
-    --sidebar-background: 252 50% 8%;
-    --sidebar-foreground: 252 31% 92%;
-    --sidebar-primary: 261 100% 70%;
-    --sidebar-primary-foreground: 252 47% 11%;
-    --sidebar-accent: 252 50% 16%;
-    --sidebar-accent-foreground: 252 31% 92%;
-    --sidebar-border: 252 30% 25%;
-    --sidebar-ring: 261 100% 70%;
+    --sidebar-background: 220 30% 10%;
+    --sidebar-foreground: 210 40% 95%;
+    --sidebar-primary: 210 100% 60%;
+    --sidebar-primary-foreground: 220 30% 8%;
+    --sidebar-accent: 220 40% 15%;
+    --sidebar-accent-foreground: 210 40% 95%;
+    --sidebar-border: 220 30% 20%;
+    --sidebar-ring: 210 100% 60%;
   }
 }
 
@@ -119,6 +126,18 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    background: var(--bg-gradient);
+    background-attachment: fixed;
+    @apply text-foreground;
+    animation: gradientShift 15s ease infinite;
+  }
+
+  @keyframes gradientShift {
+    0%, 100% {
+      background: linear-gradient(135deg, hsl(220 30% 8%) 0%, hsl(230 35% 12%) 50%, hsl(220 30% 8%) 100%);
+    }
+    50% {
+      background: linear-gradient(135deg, hsl(230 35% 12%) 0%, hsl(220 30% 8%) 50%, hsl(230 35% 12%) 100%);
+    }
   }
 }

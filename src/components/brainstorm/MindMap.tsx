@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { MindMapToolbar } from './MindMapToolbar';
 import { useToast } from '@/hooks/use-toast';
+import { toPng } from 'html-to-image';
 
 type MindMapNode = {
   id: string;
@@ -64,8 +65,8 @@ export function MindMap({ sessionId, sessionGoal, sessionTitle }: MindMapProps) 
           data: { label: node.label },
           style: {
             background: node.highlight_color || (node.agent_type ? agentColors[node.agent_type] : agentColors.user),
-            color: '#0F0520',
-            border: '2px solid #A78BFA',
+            color: '#F0F4F8',
+            border: '2px solid #3B82F6',
             borderRadius: '8px',
             padding: '10px',
             fontSize: '12px',
@@ -82,9 +83,9 @@ export function MindMap({ sessionId, sessionGoal, sessionTitle }: MindMapProps) 
           position: { x: 400, y: 300 },
           data: { label: sessionTitle },
           style: {
-            background: 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%)',
-            color: '#E9D5FF',
-            border: '3px solid #A78BFA',
+            background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+            color: '#F0F4F8',
+            border: '3px solid #60A5FA',
             borderRadius: '50%',
             padding: '20px',
             fontSize: '16px',
@@ -95,7 +96,7 @@ export function MindMap({ sessionId, sessionGoal, sessionTitle }: MindMapProps) 
             alignItems: 'center',
             justifyContent: 'center',
             textAlign: 'center',
-            boxShadow: '0 0 20px rgba(167, 139, 250, 0.5)',
+            boxShadow: '0 0 25px rgba(59, 130, 246, 0.6)',
           },
           draggable: false,
           selectable: false,
@@ -112,7 +113,7 @@ export function MindMap({ sessionId, sessionGoal, sessionTitle }: MindMapProps) 
           type: 'default',
           animated: false,
           style: {
-            stroke: '#A78BFA',
+            stroke: '#60A5FA',
             strokeWidth: 3,
             strokeDasharray: '5,5',
             filter: 'url(#sketch)',
@@ -335,6 +336,43 @@ export function MindMap({ sessionId, sessionGoal, sessionTitle }: MindMapProps) 
     }
   }, [selectedNodeId, nodes, toast]);
 
+  const handleSaveAsImage = useCallback(async () => {
+    const mindMapElement = document.querySelector('.react-flow') as HTMLElement;
+    if (!mindMapElement) {
+      toast({
+        title: "Error",
+        description: "Could not find mind map to export",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const dataUrl = await toPng(mindMapElement, {
+        backgroundColor: '#0F172A',
+        quality: 1.0,
+        pixelRatio: 2,
+      });
+
+      const link = document.createElement('a');
+      link.download = `mindmap-${sessionTitle.replace(/\s+/g, '-').toLowerCase()}.png`;
+      link.href = dataUrl;
+      link.click();
+
+      toast({
+        title: "Success",
+        description: "Mind map saved as image",
+      });
+    } catch (error) {
+      console.error('Error saving mind map as image:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save mind map as image",
+        variant: "destructive",
+      });
+    }
+  }, [sessionTitle, toast]);
+
   if (loading) {
     return (
       <Card className="w-full h-full flex items-center justify-center">
@@ -351,6 +389,7 @@ export function MindMap({ sessionId, sessionGoal, sessionTitle }: MindMapProps) 
         onDeleteSelected={handleDeleteSelected}
         onHighlightNode={handleHighlightNode}
         onToggleStrikethrough={handleToggleStrikethrough}
+        onSaveAsImage={handleSaveAsImage}
         isConnectMode={isConnectMode}
         selectedNodeId={selectedNodeId}
       />

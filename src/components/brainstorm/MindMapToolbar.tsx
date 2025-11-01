@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Link2, Trash2, Palette, Strikethrough, Type } from "lucide-react";
+import { Plus, Link2, Trash2, Palette, Strikethrough, Type, Download } from "lucide-react";
 import { useState } from "react";
 import {
   Popover,
@@ -14,6 +14,7 @@ interface MindMapToolbarProps {
   onDeleteSelected: () => void;
   onHighlightNode: (color: string) => void;
   onToggleStrikethrough: () => void;
+  onSaveAsImage: () => void;
   isConnectMode: boolean;
   selectedNodeId: string | null;
 }
@@ -24,6 +25,7 @@ export function MindMapToolbar({
   onDeleteSelected,
   onHighlightNode,
   onToggleStrikethrough,
+  onSaveAsImage,
   isConnectMode,
   selectedNodeId,
 }: MindMapToolbarProps) {
@@ -107,6 +109,12 @@ export function MindMapToolbar({
           </Button>
         </>
       )}
+      <div className="ml-auto">
+        <Button onClick={onSaveAsImage} size="sm" variant="default">
+          <Download className="h-4 w-4 mr-1" />
+          Save as Image
+        </Button>
+      </div>
     </div>
   );
 }
