@@ -459,7 +459,11 @@ export default function Session() {
             </Button>
           </div>
           <div className="flex-1">
-            <MindMap sessionId={session.id} />
+            <MindMap 
+              sessionId={session.id} 
+              sessionGoal={session.goal}
+              sessionTitle={session.title}
+            />
           </div>
         </div>
       )}

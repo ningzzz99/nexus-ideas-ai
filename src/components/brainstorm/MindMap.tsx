@@ -34,9 +34,11 @@ const agentColors: Record<string, string> = {
 
 interface MindMapProps {
   sessionId: string;
+  sessionGoal?: string;
+  sessionTitle: string;
 }
 
-export function MindMap({ sessionId }: MindMapProps) {
+export function MindMap({ sessionId, sessionGoal, sessionTitle }: MindMapProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [loading, setLoading] = useState(true);
@@ -72,7 +74,33 @@ export function MindMap({ sessionId }: MindMapProps) {
             opacity: node.is_cancelled ? 0.6 : 1,
           },
         }));
-        setNodes(flowNodes);
+
+        // Add central topic node
+        const centralNode: Node = {
+          id: 'central-topic',
+          type: 'default',
+          position: { x: 400, y: 300 },
+          data: { label: sessionGoal || sessionTitle },
+          style: {
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: '#fff',
+            border: '3px solid #222',
+            borderRadius: '50%',
+            padding: '20px',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            width: '200px',
+            height: '200px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+          },
+          draggable: false,
+          selectable: false,
+        };
+
+        setNodes([centralNode, ...flowNodes]);
       }
 
       if (edgesData) {
