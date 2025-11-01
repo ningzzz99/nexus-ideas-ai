@@ -80,7 +80,7 @@ export function MindMap({ sessionId, sessionGoal, sessionTitle }: MindMapProps) 
           id: 'central-topic',
           type: 'default',
           position: { x: 400, y: 300 },
-          data: { label: sessionGoal || sessionTitle },
+          data: { label: sessionTitle },
           style: {
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             color: '#fff',
