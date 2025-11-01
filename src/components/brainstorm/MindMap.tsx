@@ -37,9 +37,10 @@ interface MindMapProps {
   sessionId: string;
   sessionGoal?: string;
   sessionTitle: string;
+  onExportImage?: any;
 }
 
-export function MindMap({ sessionId, sessionGoal, sessionTitle }: MindMapProps) {
+export function MindMap({ sessionId, sessionGoal, sessionTitle, onExportImage }: MindMapProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [loading, setLoading] = useState(true);
@@ -127,6 +128,33 @@ export function MindMap({ sessionId, sessionGoal, sessionTitle }: MindMapProps) 
       setLoading(false);
     }
   }, [sessionId, setNodes, setEdges]);
+
+  // Define exportAsImage function
+  const exportAsImage = useCallback(async (): Promise<string | null> => {
+    const mindMapElement = document.querySelector('.react-flow') as HTMLElement;
+    if (!mindMapElement) {
+      return null;
+    }
+
+    try {
+      const dataUrl = await toPng(mindMapElement, {
+        backgroundColor: '#0F172A',
+        quality: 1.0,
+        pixelRatio: 2,
+      });
+      return dataUrl;
+    } catch (error) {
+      console.error('Error exporting mind map as image:', error);
+      return null;
+    }
+  }, []);
+
+  // Expose exportAsImage to parent component via ref
+  useEffect(() => {
+    if (onExportImage) {
+      onExportImage.current = exportAsImage;
+    }
+  }, [exportAsImage, onExportImage]);
 
   useEffect(() => {
     loadMindMap();
@@ -337,8 +365,8 @@ export function MindMap({ sessionId, sessionGoal, sessionTitle }: MindMapProps) 
   }, [selectedNodeId, nodes, toast]);
 
   const handleSaveAsImage = useCallback(async () => {
-    const mindMapElement = document.querySelector('.react-flow') as HTMLElement;
-    if (!mindMapElement) {
+    const dataUrl = await exportAsImage();
+    if (!dataUrl) {
       toast({
         title: "Error",
         description: "Could not find mind map to export",
@@ -348,12 +376,6 @@ export function MindMap({ sessionId, sessionGoal, sessionTitle }: MindMapProps) 
     }
 
     try {
-      const dataUrl = await toPng(mindMapElement, {
-        backgroundColor: '#0F172A',
-        quality: 1.0,
-        pixelRatio: 2,
-      });
-
       const link = document.createElement('a');
       link.download = `mindmap-${sessionTitle.replace(/\s+/g, '-').toLowerCase()}.png`;
       link.href = dataUrl;
@@ -371,7 +393,7 @@ export function MindMap({ sessionId, sessionGoal, sessionTitle }: MindMapProps) 
         variant: "destructive",
       });
     }
-  }, [sessionTitle, toast]);
+  }, [exportAsImage, sessionTitle, toast]);
 
   if (loading) {
     return (

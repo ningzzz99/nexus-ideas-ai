@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { sessionId } = await req.json();
+    const { sessionId, mindMapImage } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -140,43 +140,8 @@ Provide a comprehensive analysis including:
 
     console.log("Extracted summary data:", extractedData);
 
-    // Generate mindmap image using Lovable AI
-    const imagePrompt = `Create a clear, professional mind map diagram showing the key concepts from this brainstorming session: "${session?.title}".
-
-Main concepts to include: ${mindmapText}
-
-Style: Clean, modern mind map with a central topic node and branches for each concept. Use a dark background with bright, readable text. Make it visually organized and easy to understand.`;
-
-    console.log("Generating mindmap image...");
-
-    const imageResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image-preview",
-        messages: [
-          {
-            role: "user",
-            content: imagePrompt
-          }
-        ],
-        modalities: ["image", "text"]
-      }),
-    });
-
-    if (!imageResponse.ok) {
-      const errorText = await imageResponse.text();
-      console.error("Image API error:", imageResponse.status, errorText);
-      throw new Error(`Image API error: ${imageResponse.status}`);
-    }
-
-    const imageData = await imageResponse.json();
-    const imageUrl = imageData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-
-    console.log("Image generated, URL length:", imageUrl?.length);
+    // Use provided mind map image or null
+    console.log("Using captured mind map image, length:", mindMapImage?.length || 0);
 
     // Save summary to database
     const { data: savedSummary, error: insertError } = await supabase
@@ -187,7 +152,7 @@ Style: Clean, modern mind map with a central topic node and branches for each co
         key_insights: extractedData.key_insights,
         main_ideas: extractedData.main_ideas,
         action_items: extractedData.action_items,
-        mindmap_image_url: imageUrl
+        mindmap_image_url: mindMapImage
       })
       .select()
       .single();

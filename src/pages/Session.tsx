@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -378,11 +379,23 @@ export default function Session() {
     }
   };
 
+  const mindMapExportRef = React.useRef<(() => Promise<string | null>) | null>(null);
+
   const handleEndSession = async () => {
     if (!session) return;
 
     try {
       setGeneratingSummary(true);
+
+      // Capture current mind map image
+      let mindMapImage: string | null = null;
+      if (mindMapExportRef.current) {
+        toast({
+          title: "Capturing mind map...",
+          description: "Saving the current mind map",
+        });
+        mindMapImage = await mindMapExportRef.current();
+      }
 
       // Generate session summary with AI
       toast({
@@ -391,7 +404,10 @@ export default function Session() {
       });
 
       const { data, error } = await supabase.functions.invoke('generate-session-summary', {
-        body: { sessionId: session.id }
+        body: { 
+          sessionId: session.id,
+          mindMapImage 
+        }
       });
 
       if (error) {
@@ -501,6 +517,7 @@ export default function Session() {
               sessionId={session.id} 
               sessionGoal={session.goal}
               sessionTitle={session.title}
+              onExportImage={mindMapExportRef}
             />
           </div>
         </div>
