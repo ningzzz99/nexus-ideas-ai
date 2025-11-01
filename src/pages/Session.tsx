@@ -6,6 +6,9 @@ import { ChatMessage } from "@/components/brainstorm/ChatMessage";
 import { ChatInput } from "@/components/brainstorm/ChatInput";
 import { SessionHeader } from "@/components/brainstorm/SessionHeader";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { MindMap } from "@/components/brainstorm/MindMap";
+import { Button } from "@/components/ui/button";
+import { Brain } from "lucide-react";
 
 type Message = {
   id: string;
@@ -32,6 +35,7 @@ export default function Session() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [participantCount, setParticipantCount] = useState(1);
+  const [showMindMap, setShowMindMap] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -130,25 +134,87 @@ export default function Session() {
     return null;
   };
 
+  const extractConcepts = async (messageContent: string, agentType: string, messageId: string) => {
+    try {
+      const { data: existingNodes } = await supabase
+        .from('mind_map_nodes')
+        .select('label')
+        .eq('session_id', session!.id);
+
+      const { data, error } = await supabase.functions.invoke('extract-concepts', {
+        body: {
+          message: messageContent,
+          agentType,
+          existingNodes: existingNodes || [],
+        },
+      });
+
+      if (error) throw error;
+
+      if (data.concepts && data.concepts.length > 0) {
+        for (const concept of data.concepts) {
+          const randomX = Math.random() * 600;
+          const randomY = Math.random() * 400;
+
+          const { data: newNode } = await supabase
+            .from('mind_map_nodes')
+            .insert({
+              session_id: session!.id,
+              label: concept.label,
+              x_position: randomX,
+              y_position: randomY,
+              agent_type: agentType,
+              message_id: messageId,
+            })
+            .select()
+            .single();
+
+          if (newNode && concept.connections?.length > 0) {
+            const { data: existingNodesForEdges } = await supabase
+              .from('mind_map_nodes')
+              .select('id, label')
+              .eq('session_id', session!.id)
+              .in('label', concept.connections);
+
+            if (existingNodesForEdges) {
+              for (const targetNode of existingNodesForEdges) {
+                await supabase.from('mind_map_edges').insert({
+                  session_id: session!.id,
+                  source_node_id: newNode.id,
+                  target_node_id: targetNode.id,
+                });
+              }
+            }
+          }
+        }
+      }
+    } catch (error: any) {
+      console.error('Error extracting concepts:', error);
+    }
+  };
+
   const callAgent = async (agent: string, userMessage: string, conversationHistory: any[]) => {
     try {
       const { data, error } = await supabase.functions.invoke('chat-agent', {
         body: {
           agent,
           message: userMessage,
-          conversationHistory: conversationHistory.slice(-10), // Last 10 messages for context
+          conversationHistory: conversationHistory.slice(-10),
           goal: session?.goal,
         },
       });
 
       if (error) throw error;
 
-      // Save agent response
-      await supabase.from('messages').insert({
+      const { data: savedMessage } = await supabase.from('messages').insert({
         session_id: session!.id,
         content: data.reply,
         agent_type: agent,
-      });
+      }).select().single();
+
+      if (savedMessage) {
+        await extractConcepts(data.reply, agent, savedMessage.id);
+      }
 
     } catch (error: any) {
       console.error('Error calling agent:', error);
@@ -280,40 +346,70 @@ export default function Session() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-background">
-      <SessionHeader
-        title={session.title}
-        goal={session.goal}
-        sessionUrl={session.session_url}
-        onEndSession={handleEndSession}
-        participantCount={participantCount}
-        onSendDM={handleSendDM}
-        dmDisabled={sending}
-      />
+    <div className="flex h-screen bg-background">
+      <div className="flex flex-col flex-1">
+        <SessionHeader
+          title={session.title}
+          goal={session.goal}
+          sessionUrl={session.session_url}
+          onEndSession={handleEndSession}
+          participantCount={participantCount}
+          onSendDM={handleSendDM}
+          dmDisabled={sending}
+        />
 
-      <ScrollArea className="flex-1 p-4">
-        <div className="max-w-4xl mx-auto space-y-4">
-          {messages.map((message) => (
-            <ChatMessage
-              key={message.id}
-              content={message.content}
-              agentType={message.agent_type}
-              timestamp={message.created_at}
-              isAnonymous={message.is_anonymous}
-            />
-          ))}
-          <div ref={scrollRef} />
-        </div>
-      </ScrollArea>
+        <ScrollArea className="flex-1 p-4">
+          <div className="max-w-4xl mx-auto space-y-4">
+            {messages.map((message) => (
+              <ChatMessage
+                key={message.id}
+                content={message.content}
+                agentType={message.agent_type}
+                timestamp={message.created_at}
+                isAnonymous={message.is_anonymous}
+              />
+            ))}
+            <div ref={scrollRef} />
+          </div>
+        </ScrollArea>
 
-      <div className="border-t bg-card p-4">
-        <div className="max-w-4xl mx-auto">
-          <ChatInput onSend={handleSendMessage} disabled={sending} />
-          <p className="text-xs text-muted-foreground mt-2">
-            Mention agents with @spark, @probe, @facilitator, or @anchor
-          </p>
+        <div className="border-t bg-card p-4">
+          <div className="max-w-4xl mx-auto">
+            <ChatInput onSend={handleSendMessage} disabled={sending} />
+            <p className="text-xs text-muted-foreground mt-2">
+              Mention agents with @spark, @probe, @facilitator, or @anchor
+            </p>
+          </div>
         </div>
       </div>
+
+      {showMindMap && (
+        <div className="w-96 border-l flex flex-col">
+          <div className="p-4 border-b flex items-center justify-between bg-card">
+            <div className="flex items-center gap-2">
+              <Brain className="h-5 w-5" />
+              <h3 className="font-semibold">Mind Map</h3>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => setShowMindMap(false)}>
+              Close
+            </Button>
+          </div>
+          <div className="flex-1">
+            <MindMap sessionId={session.id} />
+          </div>
+        </div>
+      )}
+
+      {!showMindMap && (
+        <Button
+          className="fixed right-4 bottom-20"
+          size="lg"
+          onClick={() => setShowMindMap(true)}
+        >
+          <Brain className="h-5 w-5 mr-2" />
+          Show Mind Map
+        </Button>
+      )}
     </div>
   );
 }
