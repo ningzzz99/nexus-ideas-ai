@@ -139,9 +139,20 @@ export default function Session() {
         .from('sessions')
         .select('*')
         .eq('session_url', sessionUrl)
-        .single();
+        .maybeSingle();
 
       if (sessionError) throw sessionError;
+      
+      if (!sessionData) {
+        toast({
+          title: "Session not found",
+          description: "This session doesn't exist or the link is invalid.",
+          variant: "destructive",
+        });
+        navigate('/');
+        return;
+      }
+      
       setSession(sessionData);
 
       // Join session as participant
