@@ -8,3 +8,6 @@ verify_jwt = true
 
 [functions.private-facilitator]
 verify_jwt = true
+
+[functions.generate-session-summary]
+verify_jwt = true

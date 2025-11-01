@@ -234,6 +234,47 @@ export type Database = {
           },
         ]
       }
+      session_summaries: {
+        Row: {
+          action_items: string[] | null
+          created_at: string
+          id: string
+          key_insights: string[] | null
+          main_ideas: string[] | null
+          mindmap_image_url: string | null
+          session_id: string
+          summary_text: string
+        }
+        Insert: {
+          action_items?: string[] | null
+          created_at?: string
+          id?: string
+          key_insights?: string[] | null
+          main_ideas?: string[] | null
+          mindmap_image_url?: string | null
+          session_id: string
+          summary_text: string
+        }
+        Update: {
+          action_items?: string[] | null
+          created_at?: string
+          id?: string
+          key_insights?: string[] | null
+          main_ideas?: string[] | null
+          mindmap_image_url?: string | null
+          session_id?: string
+          summary_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_summaries_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sessions: {
         Row: {
           created_at: string | null

@@ -8,8 +8,9 @@ import { SessionHeader } from "@/components/brainstorm/SessionHeader";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MindMap } from "@/components/brainstorm/MindMap";
 import { Button } from "@/components/ui/button";
-import { Brain } from "lucide-react";
+import { Brain, FileText } from "lucide-react";
 import { PrivateFacilitatorChat } from "@/components/brainstorm/PrivateFacilitatorChat";
+import { SessionSummaryDialog } from "@/components/brainstorm/SessionSummaryDialog";
 
 type Message = {
   id: string;
@@ -39,6 +40,8 @@ export default function Session() {
   const [participantCount, setParticipantCount] = useState(1);
   const [showMindMap, setShowMindMap] = useState(false);
   const [userMessageCount, setUserMessageCount] = useState<Record<string, number>>({});
+  const [showSummaryDialog, setShowSummaryDialog] = useState(false);
+  const [generatingSummary, setGeneratingSummary] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -379,6 +382,32 @@ export default function Session() {
     if (!session) return;
 
     try {
+      setGeneratingSummary(true);
+
+      // Generate session summary with AI
+      toast({
+        title: "Generating summary...",
+        description: "Please wait while the AI analyzes the session",
+      });
+
+      const { data, error } = await supabase.functions.invoke('generate-session-summary', {
+        body: { sessionId: session.id }
+      });
+
+      if (error) {
+        console.error('Error generating summary:', error);
+        toast({
+          title: "Warning",
+          description: "Could not generate session summary, but session will be ended",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Summary generated!",
+          description: "Session summary has been created successfully",
+        });
+      }
+
       // Update session status
       await supabase
         .from('sessions')
@@ -386,13 +415,18 @@ export default function Session() {
         .eq('id', session.id);
 
       toast({ title: "Session ended" });
-      navigate('/');
+      
+      // Show summary dialog
+      setShowSummaryDialog(true);
     } catch (error: any) {
+      console.error('Error ending session:', error);
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive",
       });
+    } finally {
+      setGeneratingSummary(false);
     }
   };
 
@@ -433,6 +467,14 @@ export default function Session() {
         <div className="border-t bg-card p-4">
           <div className="max-w-4xl mx-auto space-y-3">
             <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowSummaryDialog(true)}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                View Summary
+              </Button>
               <PrivateFacilitatorChat sessionId={session.id} disabled={sending} />
             </div>
             <ChatInput onSend={handleSendMessage} disabled={sending} />
@@ -474,6 +516,13 @@ export default function Session() {
           Show Mind Map
         </Button>
       )}
+
+      <SessionSummaryDialog
+        open={showSummaryDialog}
+        onOpenChange={setShowSummaryDialog}
+        sessionId={session.id}
+        sessionTitle={session.title}
+      />
     </div>
   );
 }
