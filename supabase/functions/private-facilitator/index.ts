@@ -105,7 +105,7 @@ Generate ONLY the message to share with the group. Do not include any private co
       // Simple acknowledgment for private chat
       return new Response(
         JSON.stringify({ 
-          reply: "Great! I've shared your idea with the group. Let's see what everyone thinks!",
+          reply: "Alright! I'll share your idea with the group now. You can close this chat to see the discussion and what everyone thinks!",
           shared: true 
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
