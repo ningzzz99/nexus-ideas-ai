@@ -8,106 +8,108 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 10%;
+    /* Dark purple/blue futuristic theme */
+    --background: 252 47% 11%;
+    --foreground: 252 31% 92%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 10%;
+    --card: 252 50% 8%;
+    --card-foreground: 252 31% 92%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 10%;
+    --popover: 252 50% 8%;
+    --popover-foreground: 252 31% 92%;
 
-    --primary: 240 10% 10%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 261 100% 70%;
+    --primary-foreground: 252 47% 11%;
 
-    --secondary: 240 5% 96%;
-    --secondary-foreground: 240 10% 10%;
+    --secondary: 252 50% 16%;
+    --secondary-foreground: 252 31% 92%;
 
-    --muted: 240 5% 96%;
-    --muted-foreground: 240 4% 46%;
+    --muted: 252 35% 20%;
+    --muted-foreground: 252 20% 65%;
 
-    --accent: 240 5% 96%;
-    --accent-foreground: 240 10% 10%;
+    --accent: 220 100% 60%;
+    --accent-foreground: 252 31% 92%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive-foreground: 252 31% 92%;
 
-    --border: 240 6% 90%;
-    --input: 240 6% 90%;
-    --ring: 240 10% 10%;
+    --border: 252 30% 25%;
+    --input: 252 30% 25%;
+    --ring: 261 100% 70%;
 
     --radius: 0.75rem;
 
-    /* Agent colors */
-    --spark: 25 95% 53%;
-    --spark-foreground: 0 0% 100%;
-    --spark-light: 25 95% 95%;
+    /* Agent colors - futuristic neon */
+    --spark: 335 100% 65%;
+    --spark-foreground: 252 47% 11%;
+    --spark-light: 335 100% 95%;
 
-    --probe: 210 100% 56%;
-    --probe-foreground: 0 0% 100%;
-    --probe-light: 210 100% 95%;
+    --probe: 190 100% 60%;
+    --probe-foreground: 252 47% 11%;
+    --probe-light: 190 100% 95%;
 
-    --facilitator: 160 84% 39%;
-    --facilitator-foreground: 0 0% 100%;
-    --facilitator-light: 160 84% 95%;
+    --facilitator: 160 100% 50%;
+    --facilitator-foreground: 252 47% 11%;
+    --facilitator-light: 160 100% 95%;
 
-    --anchor: 263 70% 50%;
-    --anchor-foreground: 0 0% 100%;
-    --anchor-light: 263 70% 95%;
+    --anchor: 270 100% 70%;
+    --anchor-foreground: 252 47% 11%;
+    --anchor-light: 270 100% 95%;
 
-    /* Gradients */
-    --gradient-spark: linear-gradient(135deg, hsl(25 95% 53%) 0%, hsl(35 95% 58%) 100%);
-    --gradient-probe: linear-gradient(135deg, hsl(210 100% 56%) 0%, hsl(220 100% 60%) 100%);
-    --gradient-facilitator: linear-gradient(135deg, hsl(160 84% 39%) 0%, hsl(170 84% 43%) 100%);
-    --gradient-anchor: linear-gradient(135deg, hsl(263 70% 50%) 0%, hsl(273 70% 54%) 100%);
+    /* Futuristic gradients */
+    --gradient-spark: linear-gradient(135deg, hsl(335 100% 65%) 0%, hsl(345 100% 70%) 100%);
+    --gradient-probe: linear-gradient(135deg, hsl(190 100% 60%) 0%, hsl(200 100% 65%) 100%);
+    --gradient-facilitator: linear-gradient(135deg, hsl(160 100% 50%) 0%, hsl(170 100% 55%) 100%);
+    --gradient-anchor: linear-gradient(135deg, hsl(270 100% 70%) 0%, hsl(280 100% 75%) 100%);
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 252 50% 8%;
+    --sidebar-foreground: 252 31% 92%;
+    --sidebar-primary: 261 100% 70%;
+    --sidebar-primary-foreground: 252 47% 11%;
+    --sidebar-accent: 252 50% 16%;
+    --sidebar-accent-foreground: 252 31% 92%;
+    --sidebar-border: 252 30% 25%;
+    --sidebar-ring: 261 100% 70%;
   }
 
   .dark {
-    --background: 240 10% 4%;
-    --foreground: 0 0% 98%;
+    /* Same as root for dark theme consistency */
+    --background: 252 47% 11%;
+    --foreground: 252 31% 92%;
 
-    --card: 240 10% 8%;
-    --card-foreground: 0 0% 98%;
+    --card: 252 50% 8%;
+    --card-foreground: 252 31% 92%;
 
-    --popover: 240 10% 8%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 252 50% 8%;
+    --popover-foreground: 252 31% 92%;
 
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 10% 10%;
+    --primary: 261 100% 70%;
+    --primary-foreground: 252 47% 11%;
 
-    --secondary: 240 4% 16%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 252 50% 16%;
+    --secondary-foreground: 252 31% 92%;
 
-    --muted: 240 4% 16%;
-    --muted-foreground: 240 5% 65%;
+    --muted: 252 35% 20%;
+    --muted-foreground: 252 20% 65%;
 
-    --accent: 240 4% 16%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 220 100% 60%;
+    --accent-foreground: 252 31% 92%;
 
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 252 31% 92%;
 
-    --border: 240 4% 16%;
-    --input: 240 4% 16%;
-    --ring: 240 5% 84%;
+    --border: 252 30% 25%;
+    --input: 252 30% 25%;
+    --ring: 261 100% 70%;
 
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 252 50% 8%;
+    --sidebar-foreground: 252 31% 92%;
+    --sidebar-primary: 261 100% 70%;
+    --sidebar-primary-foreground: 252 47% 11%;
+    --sidebar-accent: 252 50% 16%;
+    --sidebar-accent-foreground: 252 31% 92%;
+    --sidebar-border: 252 30% 25%;
+    --sidebar-ring: 261 100% 70%;
   }
 }
 

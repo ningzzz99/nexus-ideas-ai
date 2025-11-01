@@ -37,11 +37,16 @@ export function MindMapToolbar({
   };
 
   const highlightColors = [
-    { name: "Yellow", value: "#FFE66D" },
-    { name: "Green", value: "#95E1D3" },
-    { name: "Blue", value: "#4ECDC4" },
-    { name: "Pink", value: "#FF6B6B" },
-    { name: "Purple", value: "#B19CD9" },
+    { name: "Cyan", value: "#00D9FF" },
+    { name: "Purple", value: "#A78BFA" },
+    { name: "Pink", value: "#F472B6" },
+    { name: "Yellow", value: "#FDE047" },
+    { name: "Orange", value: "#FB923C" },
+    { name: "Green", value: "#4ADE80" },
+    { name: "Blue", value: "#60A5FA" },
+    { name: "Violet", value: "#C084FC" },
+    { name: "Rose", value: "#FB7185" },
+    { name: "Emerald", value: "#34D399" },
     { name: "None", value: "" },
   ];
 
