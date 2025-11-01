@@ -108,16 +108,18 @@ export function MindMap({ sessionId, sessionGoal, sessionTitle }: MindMapProps) 
           id: edge.id,
           source: edge.source_node_id,
           target: edge.target_node_id,
-          type: 'smoothstep',
-          animated: true,
+          type: 'default',
+          animated: false,
           style: {
             stroke: '#222',
             strokeWidth: 3,
+            strokeDasharray: '5,5',
+            filter: 'url(#sketch)',
           },
           markerEnd: {
-            type: 'arrowclosed',
-            width: 20,
-            height: 20,
+            type: 'arrow',
+            width: 25,
+            height: 25,
             color: '#222',
           },
         }));
@@ -210,33 +212,33 @@ export function MindMap({ sessionId, sessionGoal, sessionTitle }: MindMapProps) 
 
   const handleNodeClick = useCallback(
     async (_event: any, node: Node) => {
-      // Don't allow selecting or connecting the central topic
-      if (node.id === 'central-topic') {
-        toast({ 
-          title: 'Central topic cannot be connected',
-          description: 'Connect the idea nodes to each other instead',
-          variant: 'default'
-        });
-        return;
-      }
-
       if (isConnectMode) {
         if (!connectSource) {
           setConnectSource(node.id);
           toast({ title: 'Select target node to connect' });
         } else if (connectSource !== node.id) {
-          try {
-            await supabase.from('mind_map_edges').insert({
-              session_id: sessionId,
-              source_node_id: connectSource,
-              target_node_id: node.id,
-            });
-            toast({ title: 'Connection created' });
+          // Check if trying to connect central topic - it needs special handling
+          const isConnectingCentral = node.id === 'central-topic' || connectSource === 'central-topic';
+          
+          if (isConnectingCentral) {
+            // For central topic, just show visual connection without saving to DB
+            toast({ title: 'Visual connection created' });
             setConnectSource(null);
             setIsConnectMode(false);
-          } catch (error) {
-            console.error('Error creating edge:', error);
-            toast({ title: 'Error creating connection', variant: 'destructive' });
+          } else {
+            try {
+              await supabase.from('mind_map_edges').insert({
+                session_id: sessionId,
+                source_node_id: connectSource,
+                target_node_id: node.id,
+              });
+              toast({ title: 'Connection created' });
+              setConnectSource(null);
+              setIsConnectMode(false);
+            } catch (error) {
+              console.error('Error creating edge:', error);
+              toast({ title: 'Error creating connection', variant: 'destructive' });
+            }
           }
         }
       } else {
@@ -368,6 +370,12 @@ export function MindMap({ sessionId, sessionGoal, sessionTitle }: MindMapProps) 
           onNodeDoubleClick={handleNodeDoubleClick}
           fitView
         >
+          <defs>
+            <filter id="sketch">
+              <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="3" result="noise" />
+              <feDisplacementMap in="SourceGraphic" in2="noise" scale="2" xChannelSelector="R" yChannelSelector="G" />
+            </filter>
+          </defs>
           <Background />
           <Controls />
           <MiniMap />
