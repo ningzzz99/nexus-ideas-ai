@@ -1,9 +1,11 @@
 import { useEffect, useState, useCallback } from 'react';
-import { ReactFlow, Node, Edge, Background, Controls, MiniMap, useNodesState, useEdgesState, NodeTypes } from '@xyflow/react';
+import { ReactFlow, Node, Edge, Background, Controls, MiniMap, useNodesState, useEdgesState, Connection } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
+import { MindMapToolbar } from './MindMapToolbar';
+import { useToast } from '@/hooks/use-toast';
 
 type MindMapNode = {
   id: string;
@@ -35,6 +37,10 @@ export function MindMap({ sessionId }: MindMapProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [isConnectMode, setIsConnectMode] = useState(false);
+  const [connectSource, setConnectSource] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const loadMindMap = useCallback(async () => {
     try {
@@ -134,6 +140,75 @@ export function MindMap({ sessionId }: MindMapProps) {
     []
   );
 
+  const handleAddNode = useCallback(
+    async (label: string) => {
+      try {
+        const randomX = Math.random() * 400 + 100;
+        const randomY = Math.random() * 300 + 100;
+
+        await supabase.from('mind_map_nodes').insert({
+          session_id: sessionId,
+          label,
+          x_position: randomX,
+          y_position: randomY,
+          agent_type: 'user',
+        });
+
+        toast({ title: 'Node added successfully' });
+      } catch (error) {
+        console.error('Error adding node:', error);
+        toast({ title: 'Error adding node', variant: 'destructive' });
+      }
+    },
+    [sessionId, toast]
+  );
+
+  const handleNodeClick = useCallback(
+    async (_event: any, node: Node) => {
+      if (isConnectMode) {
+        if (!connectSource) {
+          setConnectSource(node.id);
+          toast({ title: 'Select target node to connect' });
+        } else if (connectSource !== node.id) {
+          try {
+            await supabase.from('mind_map_edges').insert({
+              session_id: sessionId,
+              source_node_id: connectSource,
+              target_node_id: node.id,
+            });
+            toast({ title: 'Connection created' });
+            setConnectSource(null);
+            setIsConnectMode(false);
+          } catch (error) {
+            console.error('Error creating edge:', error);
+            toast({ title: 'Error creating connection', variant: 'destructive' });
+          }
+        }
+      } else {
+        setSelectedNodeId(node.id);
+      }
+    },
+    [isConnectMode, connectSource, sessionId, toast]
+  );
+
+  const handleDeleteSelected = useCallback(async () => {
+    if (!selectedNodeId) return;
+
+    try {
+      await supabase.from('mind_map_nodes').delete().eq('id', selectedNodeId);
+      toast({ title: 'Node deleted' });
+      setSelectedNodeId(null);
+    } catch (error) {
+      console.error('Error deleting node:', error);
+      toast({ title: 'Error deleting node', variant: 'destructive' });
+    }
+  }, [selectedNodeId, toast]);
+
+  const handleToggleConnectMode = useCallback(() => {
+    setIsConnectMode((prev) => !prev);
+    setConnectSource(null);
+  }, []);
+
   if (loading) {
     return (
       <Card className="w-full h-full flex items-center justify-center">
@@ -143,19 +218,29 @@ export function MindMap({ sessionId }: MindMapProps) {
   }
 
   return (
-    <Card className="w-full h-full border-0">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onNodeDragStop={handleNodeDragStop}
-        fitView
-      >
-        <Background />
-        <Controls />
-        <MiniMap />
-      </ReactFlow>
+    <Card className="w-full h-full border-0 flex flex-col">
+      <MindMapToolbar
+        onAddNode={handleAddNode}
+        onToggleConnectMode={handleToggleConnectMode}
+        onDeleteSelected={handleDeleteSelected}
+        isConnectMode={isConnectMode}
+        selectedNodeId={selectedNodeId}
+      />
+      <div className="flex-1">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onNodeDragStop={handleNodeDragStop}
+          onNodeClick={handleNodeClick}
+          fitView
+        >
+          <Background />
+          <Controls />
+          <MiniMap />
+        </ReactFlow>
+      </div>
     </Card>
   );
 }
