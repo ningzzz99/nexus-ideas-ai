@@ -432,8 +432,10 @@ export default function Session() {
 
       toast({ title: "Session ended" });
       
-      // Show summary dialog
-      setShowSummaryDialog(true);
+      // Wait a moment for the summary to be fully saved, then show dialog
+      setTimeout(() => {
+        setShowSummaryDialog(true);
+      }, 1000);
     } catch (error: any) {
       console.error('Error ending session:', error);
       toast({

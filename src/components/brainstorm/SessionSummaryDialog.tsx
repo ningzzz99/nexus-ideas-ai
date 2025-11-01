@@ -54,18 +54,15 @@ export function SessionSummaryDialog({
         .from('session_summaries')
         .select('*')
         .eq('session_id', sessionId)
-        .single();
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
       if (error) {
-        if (error.code === 'PGRST116') {
-          // No summary found - that's ok
-          setSummary(null);
-        } else {
-          throw error;
-        }
-      } else {
-        setSummary(data);
+        throw error;
       }
+      
+      setSummary(data);
     } catch (error) {
       console.error('Error loading summary:', error);
       toast({
