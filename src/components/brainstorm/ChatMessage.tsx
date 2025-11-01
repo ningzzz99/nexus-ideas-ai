@@ -46,7 +46,7 @@ export const ChatMessage = ({
           </span>
         </div>
         <div className={`rounded-lg border-2 p-3 ${colorClass}`}>
-          <p className="text-sm whitespace-pre-wrap">{content}</p>
+          <p className="text-sm whitespace-pre-wrap text-foreground">{content}</p>
         </div>
       </div>
     </div>
