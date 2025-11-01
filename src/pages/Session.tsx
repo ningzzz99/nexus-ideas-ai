@@ -199,6 +199,57 @@ export default function Session() {
     }
   };
 
+  const handleSendDM = async (content: string) => {
+    if (!session) return;
+
+    setSending(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Build conversation history
+      const conversationHistory = messages.map((msg) => ({
+        role: msg.agent_type === 'user' ? 'user' : 'assistant',
+        content: msg.content,
+      }));
+
+      // Call facilitator to post anonymously
+      const { data, error } = await supabase.functions.invoke('chat-agent', {
+        body: {
+          agent: 'facilitator',
+          message: content,
+          conversationHistory: conversationHistory.slice(-10),
+          goal: session.goal,
+          isAnonymous: true,
+        },
+      });
+
+      if (error) throw error;
+
+      // Save the anonymous message as a user message
+      await supabase.from('messages').insert({
+        session_id: session.id,
+        content: data.reply,
+        agent_type: 'user',
+        is_anonymous: true,
+      });
+
+      toast({
+        title: "Idea shared anonymously",
+        description: "The Facilitator has posted your idea to the chat.",
+      });
+
+    } catch (error: any) {
+      toast({
+        title: "Error sending DM",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSending(false);
+    }
+  };
+
   const handleEndSession = async () => {
     if (!session) return;
 
@@ -236,6 +287,8 @@ export default function Session() {
         sessionUrl={session.session_url}
         onEndSession={handleEndSession}
         participantCount={participantCount}
+        onSendDM={handleSendDM}
+        dmDisabled={sending}
       />
 
       <ScrollArea className="flex-1 p-4">

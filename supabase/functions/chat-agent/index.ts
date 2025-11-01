@@ -47,7 +47,7 @@ serve(async (req) => {
   }
 
   try {
-    const { agent, message, conversationHistory, goal } = await req.json();
+    const { agent, message, conversationHistory, goal, isAnonymous } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -55,11 +55,25 @@ serve(async (req) => {
     }
 
     // Build system prompt with context
-    const systemPrompt = `${AGENT_PROMPTS[agent as keyof typeof AGENT_PROMPTS]}
+    let systemPrompt = `${AGENT_PROMPTS[agent as keyof typeof AGENT_PROMPTS]}
 
 ${goal ? `Current session goal: ${goal}` : ""}
 
 Remember: You are ${agent}. Stay in character and keep responses brief and impactful.`;
+
+    // If this is an anonymous DM to facilitator, change the prompt
+    if (isAnonymous && agent === 'facilitator') {
+      systemPrompt = `You are Facilitator. A team member has sent you a private idea to share anonymously with the group.
+Your job is to:
+- Rephrase their idea clearly and professionally
+- Present it as if it's coming from an anonymous team member
+- Keep the core message intact but make it sound natural
+- Keep it concise (2-3 sentences)
+
+${goal ? `Current session goal: ${goal}` : ""}
+
+Output the rephrased idea directly, without attribution or commentary.`;
+    }
 
     // Build messages array
     const messages = [

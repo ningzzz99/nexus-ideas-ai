@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Copy, LogOut, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { DMDialog } from "./DMDialog";
 
 interface SessionHeaderProps {
   title: string;
@@ -8,6 +9,8 @@ interface SessionHeaderProps {
   sessionUrl: string;
   onEndSession: () => void;
   participantCount: number;
+  onSendDM: (content: string) => void;
+  dmDisabled?: boolean;
 }
 
 export const SessionHeader = ({
@@ -16,6 +19,8 @@ export const SessionHeader = ({
   sessionUrl,
   onEndSession,
   participantCount,
+  onSendDM,
+  dmDisabled,
 }: SessionHeaderProps) => {
   const { toast } = useToast();
 
@@ -37,6 +42,7 @@ export const SessionHeader = ({
             <Copy className="h-4 w-4 mr-2" />
             Invite
           </Button>
+          <DMDialog onSendDM={onSendDM} disabled={dmDisabled} />
           <Button variant="outline" size="sm" onClick={onEndSession}>
             <LogOut className="h-4 w-4 mr-2" />
             End Session
