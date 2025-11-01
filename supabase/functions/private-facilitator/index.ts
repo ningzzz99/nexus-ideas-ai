@@ -94,11 +94,54 @@ Generate ONLY the message to share with the group. Do not include any private co
 
         if (facilitatorMessage) {
           // Post as facilitator to main chat
-          await supabase.from('messages').insert({
+          const { data: insertedMessage } = await supabase.from('messages').insert({
             session_id: sessionId,
             content: facilitatorMessage,
             agent_type: 'facilitator',
-          });
+          }).select().single();
+
+          // Extract concepts and add to mind map
+          if (insertedMessage) {
+            try {
+              // Get existing nodes to avoid duplicates
+              const { data: existingNodes } = await supabase
+                .from('mind_map_nodes')
+                .select('label')
+                .eq('session_id', sessionId);
+
+              const existingLabels = existingNodes?.map(n => n.label.toLowerCase()) || [];
+
+              // Call extract-concepts function
+              const conceptsResponse = await supabase.functions.invoke('extract-concepts', {
+                body: {
+                  message: facilitatorMessage,
+                  agentType: 'facilitator',
+                  existingNodes: existingLabels,
+                },
+              });
+
+              if (conceptsResponse.data?.concepts) {
+                const concepts = conceptsResponse.data.concepts;
+
+                // Insert new nodes
+                for (const concept of concepts) {
+                  await supabase.from('mind_map_nodes').insert({
+                    session_id: sessionId,
+                    label: concept.label,
+                    agent_type: 'facilitator',
+                    message_id: insertedMessage.id,
+                    x_position: Math.random() * 600 + 100,
+                    y_position: Math.random() * 400 + 100,
+                  });
+                }
+
+                console.log(`Added ${concepts.length} concepts to mind map from shared idea`);
+              }
+            } catch (conceptError) {
+              console.error('Error extracting concepts for mind map:', conceptError);
+              // Don't fail the whole operation if mind map update fails
+            }
+          }
         }
       }
 
