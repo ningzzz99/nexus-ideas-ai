@@ -102,7 +102,9 @@ export type Database = {
         Row: {
           agent_type: string | null
           created_at: string
+          highlight_color: string | null
           id: string
+          is_cancelled: boolean | null
           label: string
           message_id: string | null
           session_id: string
@@ -112,7 +114,9 @@ export type Database = {
         Insert: {
           agent_type?: string | null
           created_at?: string
+          highlight_color?: string | null
           id?: string
+          is_cancelled?: boolean | null
           label: string
           message_id?: string | null
           session_id: string
@@ -122,7 +126,9 @@ export type Database = {
         Update: {
           agent_type?: string | null
           created_at?: string
+          highlight_color?: string | null
           id?: string
+          is_cancelled?: boolean | null
           label?: string
           message_id?: string | null
           session_id?: string
@@ -139,6 +145,41 @@ export type Database = {
           },
           {
             foreignKeyName: "mind_map_nodes_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      private_messages: {
+        Row: {
+          content: string
+          created_at: string
+          from_facilitator: boolean
+          id: string
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          from_facilitator?: boolean
+          id?: string
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          from_facilitator?: boolean
+          id?: string
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "private_messages_session_id_fkey"
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "sessions"

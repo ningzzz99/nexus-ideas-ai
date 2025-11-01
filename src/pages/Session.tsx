@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { MindMap } from "@/components/brainstorm/MindMap";
 import { Button } from "@/components/ui/button";
 import { Brain } from "lucide-react";
+import { PrivateFacilitatorChat } from "@/components/brainstorm/PrivateFacilitatorChat";
 
 type Message = {
   id: string;
@@ -16,6 +17,7 @@ type Message = {
   agent_type: 'spark' | 'probe' | 'facilitator' | 'anchor' | 'user';
   created_at: string;
   is_anonymous: boolean;
+  user_id?: string;
 };
 
 type Session = {
@@ -36,6 +38,7 @@ export default function Session() {
   const [sending, setSending] = useState(false);
   const [participantCount, setParticipantCount] = useState(1);
   const [showMindMap, setShowMindMap] = useState(false);
+  const [userMessageCount, setUserMessageCount] = useState<Record<string, number>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -72,7 +75,56 @@ export default function Session() {
     if (scrollRef.current) {
       scrollRef.current.scrollIntoView({ behavior: 'smooth' });
     }
+
+    // Track inactive participants every 10 messages
+    if (messages.length > 0 && messages.length % 10 === 0) {
+      checkInactiveParticipants();
+    }
   }, [messages]);
+
+  const checkInactiveParticipants = async () => {
+    if (!session) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Get all participants
+      const { data: participants } = await supabase
+        .from('session_participants')
+        .select('user_id, profiles(display_name)')
+        .eq('session_id', session.id);
+
+      if (!participants) return;
+
+      // Count recent user messages (last 10)
+      const recentMessages = messages.slice(-10);
+      const recentUserIds = new Set(
+        recentMessages
+          .filter((m) => m.agent_type === 'user' && !m.is_anonymous)
+          .map((m) => m.user_id)
+          .filter(Boolean)
+      );
+
+      // Find inactive participants
+      const inactiveParticipants = participants.filter(
+        (p) => p.user_id !== user.id && !recentUserIds.has(p.user_id)
+      );
+
+      // Have facilitator engage each inactive participant
+      for (const participant of inactiveParticipants) {
+        const displayName = (participant.profiles as any)?.display_name || 'team member';
+        
+        await supabase.from('messages').insert({
+          session_id: session.id,
+          content: `@${displayName} - I'd love to hear your thoughts! What ideas do you have about ${session.goal || 'this topic'}? Any perspectives you'd like to share?`,
+          agent_type: 'facilitator',
+        });
+      }
+    } catch (error) {
+      console.error('Error checking inactive participants:', error);
+    }
+  };
 
   const loadSession = async () => {
     try {
@@ -374,7 +426,10 @@ export default function Session() {
         </ScrollArea>
 
         <div className="border-t bg-card p-4">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-4xl mx-auto space-y-3">
+            <div className="flex gap-2 justify-end">
+              <PrivateFacilitatorChat sessionId={session.id} disabled={sending} />
+            </div>
             <ChatInput onSend={handleSendMessage} disabled={sending} />
             <p className="text-xs text-muted-foreground mt-2">
               Mention agents with @spark, @probe, @facilitator, or @anchor

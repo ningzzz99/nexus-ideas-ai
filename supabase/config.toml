@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.extract-concepts]
 verify_jwt = true
+
+[functions.private-facilitator]
+verify_jwt = true

@@ -13,6 +13,8 @@ type MindMapNode = {
   x_position: number;
   y_position: number;
   agent_type: string | null;
+  is_cancelled: boolean | null;
+  highlight_color: string | null;
 };
 
 type MindMapEdge = {
@@ -56,13 +58,15 @@ export function MindMap({ sessionId }: MindMapProps) {
           position: { x: node.x_position, y: node.y_position },
           data: { label: node.label },
           style: {
-            background: node.agent_type ? agentColors[node.agent_type] : agentColors.user,
+            background: node.highlight_color || (node.agent_type ? agentColors[node.agent_type] : agentColors.user),
             color: '#000',
             border: '2px solid #222',
             borderRadius: '8px',
             padding: '10px',
             fontSize: '12px',
             fontWeight: 'bold',
+            textDecoration: node.is_cancelled ? 'line-through' : 'none',
+            opacity: node.is_cancelled ? 0.6 : 1,
           },
         }));
         setNodes(flowNodes);
@@ -209,6 +213,51 @@ export function MindMap({ sessionId }: MindMapProps) {
     setConnectSource(null);
   }, []);
 
+  const handleHighlightNode = useCallback(
+    async (color: string) => {
+      if (!selectedNodeId) return;
+
+      try {
+        await supabase
+          .from('mind_map_nodes')
+          .update({ highlight_color: color || null })
+          .eq('id', selectedNodeId);
+        toast({ title: color ? 'Node highlighted' : 'Highlight removed' });
+      } catch (error) {
+        console.error('Error highlighting node:', error);
+        toast({ title: 'Error highlighting node', variant: 'destructive' });
+      }
+    },
+    [selectedNodeId, toast]
+  );
+
+  const handleToggleStrikethrough = useCallback(async () => {
+    if (!selectedNodeId) return;
+
+    try {
+      const currentNode = nodes.find((n) => n.id === selectedNodeId);
+      const currentData = await supabase
+        .from('mind_map_nodes')
+        .select('is_cancelled')
+        .eq('id', selectedNodeId)
+        .single();
+
+      const newCancelledState = !currentData.data?.is_cancelled;
+
+      await supabase
+        .from('mind_map_nodes')
+        .update({ is_cancelled: newCancelledState })
+        .eq('id', selectedNodeId);
+
+      toast({
+        title: newCancelledState ? 'Node cancelled' : 'Node restored',
+      });
+    } catch (error) {
+      console.error('Error toggling strikethrough:', error);
+      toast({ title: 'Error updating node', variant: 'destructive' });
+    }
+  }, [selectedNodeId, nodes, toast]);
+
   if (loading) {
     return (
       <Card className="w-full h-full flex items-center justify-center">
@@ -223,6 +272,8 @@ export function MindMap({ sessionId }: MindMapProps) {
         onAddNode={handleAddNode}
         onToggleConnectMode={handleToggleConnectMode}
         onDeleteSelected={handleDeleteSelected}
+        onHighlightNode={handleHighlightNode}
+        onToggleStrikethrough={handleToggleStrikethrough}
         isConnectMode={isConnectMode}
         selectedNodeId={selectedNodeId}
       />
