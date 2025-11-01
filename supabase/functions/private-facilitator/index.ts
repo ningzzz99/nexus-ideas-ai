@@ -48,16 +48,68 @@ serve(async (req) => {
     let shouldShareToGroup = false;
 
     if (isAskingToShare && isYesResponse) {
-      // User said yes to sharing
+      // User said yes to sharing - create facilitator message
       shouldShareToGroup = true;
-      systemPrompt = `You are the Facilitator in a brainstorming session. The user has agreed to share their idea with the group.
+      
+      // Get the user's original idea
+      const userIdeas = conversationHistory
+        .filter((msg: any) => !msg.from_facilitator)
+        .map((msg: any) => msg.content);
+      const ideaToShare = userIdeas.slice(-2)[0] || userMessage;
+      
+      systemPrompt = `You are the Facilitator in a brainstorming session. A team member privately shared this idea with you: "${ideaToShare}"
 
-Your job is to:
-1. Acknowledge their decision positively
-2. Let them know you'll post it anonymously to the group
-3. Keep your response brief (1-2 sentences)
+They agreed to let you share it with the group. Your job is to:
+1. Present their idea to the group in an engaging way
+2. Use this format: "Someone suggested [their idea]... and I think it's pretty cool because [explain why it's interesting]... @everyone what do you think?"
+3. Add your own perspective on why the idea is valuable or interesting
+4. Keep it natural and conversational (3-4 sentences)
+5. Tag @everyone to encourage discussion
 
-${session?.goal ? `Session goal: ${session.goal}` : ""}`;
+${session?.goal ? `Session goal: ${session.goal}` : ""}
+
+Generate ONLY the message to share with the group. Do not include any private conversation acknowledgment.`;
+
+      // Don't respond privately, just share to group
+      const shareMessages = [
+        { role: "system", content: systemPrompt },
+      ];
+
+      const shareResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: shareMessages,
+          temperature: 0.7,
+        }),
+      });
+
+      if (shareResponse.ok) {
+        const shareData = await shareResponse.json();
+        const facilitatorMessage = shareData.choices?.[0]?.message?.content;
+
+        if (facilitatorMessage) {
+          // Post as facilitator to main chat
+          await supabase.from('messages').insert({
+            session_id: sessionId,
+            content: facilitatorMessage,
+            agent_type: 'facilitator',
+          });
+        }
+      }
+
+      // Simple acknowledgment for private chat
+      return new Response(
+        JSON.stringify({ 
+          reply: "Great! I've shared your idea with the group. Let's see what everyone thinks!",
+          shared: true 
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
 
     } else if (isAskingToShare && isNoResponse) {
       // User said no to sharing
@@ -126,28 +178,8 @@ Remember: This is a PRIVATE conversation. Only share their idea with the group i
       throw new Error("No response from AI");
     }
 
-    // If user agreed to share, post anonymously to group
-    if (shouldShareToGroup) {
-      // Find the user's original idea from conversation history
-      const userIdeas = conversationHistory
-        .filter((msg: any) => !msg.from_facilitator)
-        .map((msg: any) => msg.content);
-
-      const ideaToShare = userIdeas.slice(-2)[0] || userMessage; // Get the idea before "yes"
-
-      // Post to main chat anonymously
-      await supabase.from('messages').insert({
-        session_id: sessionId,
-        content: ideaToShare,
-        agent_type: 'user',
-        is_anonymous: true,
-      });
-
-      console.log("Shared idea anonymously to group");
-    }
-
     return new Response(
-      JSON.stringify({ reply, shared: shouldShareToGroup }),
+      JSON.stringify({ reply, shared: false }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
