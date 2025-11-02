@@ -95,22 +95,22 @@ Provide a comprehensive analysis including:
                 properties: {
                   summary: {
                     type: "string",
-                    description: "A comprehensive summary of the session (2-3 paragraphs)"
+                    description: "A concise summary of the session (1-2 paragraphs)"
                   },
                   key_insights: {
                     type: "array",
                     items: { type: "string" },
-                    description: "3-5 key insights or findings from the discussion"
+                    description: "2-5 key insights or findings from the discussion"
                   },
                   main_ideas: {
                     type: "array",
                     items: { type: "string" },
-                    description: "3-7 main ideas or concepts discussed"
+                    description: "2-7 main ideas or concepts discussed"
                   },
                   action_items: {
                     type: "array",
                     items: { type: "string" },
-                    description: "3-5 specific actions that need to be taken"
+                    description: "2-5 specific actions that need to be taken"
                   }
                 },
                 required: ["summary", "key_insights", "main_ideas", "action_items"],
