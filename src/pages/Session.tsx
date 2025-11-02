@@ -44,6 +44,9 @@ export default function Session() {
   const [showSummaryDialog, setShowSummaryDialog] = useState(false);
   const [generatingSummary, setGeneratingSummary] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastActivityRef = useRef<Date>(new Date());
+  const lastAgentCalledRef = useRef<'spark' | 'probe'>('probe');
 
   useEffect(() => {
     loadSession();
@@ -84,7 +87,121 @@ export default function Session() {
     if (messages.length > 0 && messages.length % 10 === 0) {
       checkInactiveParticipants();
     }
+
+    // Update last activity timestamp
+    if (messages.length > 0) {
+      lastActivityRef.current = new Date();
+    }
+
+    // Trigger Anchor interventions based on message count
+    if (messages.length === 15) {
+      triggerAnchorReminder();
+    } else if (messages.length === 30) {
+      triggerAnchorSummaryPrompt();
+    }
   }, [messages]);
+
+  // Inactivity monitoring
+  useEffect(() => {
+    if (!session || messages.length === 0) return;
+
+    // Clear existing timer
+    if (inactivityTimerRef.current) {
+      clearInterval(inactivityTimerRef.current);
+    }
+
+    // Check inactivity every 30 seconds
+    inactivityTimerRef.current = setInterval(() => {
+      const now = new Date();
+      const timeSinceLastActivity = (now.getTime() - lastActivityRef.current.getTime()) / 1000;
+
+      // Check if it's been 1 minute since the facilitator's initial greeting (only user messages)
+      const userMessages = messages.filter(m => m.agent_type === 'user');
+      const facilitatorMessages = messages.filter(m => m.agent_type === 'facilitator');
+      
+      if (facilitatorMessages.length === 1 && userMessages.length === 0 && timeSinceLastActivity > 60) {
+        triggerSparkToStart();
+        lastActivityRef.current = now; // Reset timer after triggering
+      }
+      // Check if it's been 2 minutes of general inactivity
+      else if (timeSinceLastActivity > 120) {
+        triggerAgentForInactivity();
+        lastActivityRef.current = now; // Reset timer after triggering
+      }
+    }, 30000); // Check every 30 seconds
+
+    return () => {
+      if (inactivityTimerRef.current) {
+        clearInterval(inactivityTimerRef.current);
+      }
+    };
+  }, [session, messages]);
+
+  const triggerSparkToStart = async () => {
+    if (!session) return;
+    
+    try {
+      const conversationHistory = messages.map((msg) => ({
+        role: msg.agent_type === 'user' ? 'user' : 'assistant',
+        content: msg.content,
+      }));
+
+      await callAgent('spark', 'Please share some initial creative ideas to get us started!', conversationHistory);
+    } catch (error) {
+      console.error('Error triggering Spark:', error);
+    }
+  };
+
+  const triggerAgentForInactivity = async () => {
+    if (!session) return;
+    
+    try {
+      // Alternate between Spark and Probe
+      const nextAgent = lastAgentCalledRef.current === 'spark' ? 'probe' : 'spark';
+      lastAgentCalledRef.current = nextAgent;
+
+      const conversationHistory = messages.map((msg) => ({
+        role: msg.agent_type === 'user' ? 'user' : 'assistant',
+        content: msg.content,
+      }));
+
+      const message = nextAgent === 'spark' 
+        ? 'The conversation has slowed down. Please contribute a fresh, creative idea to re-energize the discussion!'
+        : 'The conversation has slowed down. Please challenge an existing idea or ask a critical question to deepen the discussion!';
+
+      await callAgent(nextAgent, message, conversationHistory);
+    } catch (error) {
+      console.error('Error triggering agent for inactivity:', error);
+    }
+  };
+
+  const triggerAnchorReminder = async () => {
+    if (!session) return;
+    
+    try {
+      await supabase.from('messages').insert({
+        session_id: session.id,
+        content: `Great discussion so far! Let me remind everyone - our goal is: "${session.goal || 'our main objective'}". Are we still aligned with this goal? Let's make sure our ideas are serving this purpose.`,
+        agent_type: 'anchor',
+      });
+    } catch (error) {
+      console.error('Error triggering Anchor reminder:', error);
+    }
+  };
+
+  const triggerAnchorSummaryPrompt = async () => {
+    if (!session) return;
+    
+    try {
+      await supabase.from('messages').insert({
+        session_id: session.id,
+        content: `We've had a robust discussion with many ideas on the table! I'm wondering - are we ready to start summarizing our key insights? Or should we narrow down to the most promising ideas that align with our goal: "${session.goal || 'our objective'}"?`,
+        agent_type: 'anchor',
+      });
+    } catch (error) {
+      console.error('Error triggering Anchor summary prompt:', error);
+    }
+  };
 
   const checkInactiveParticipants = async () => {
     if (!session) return;
@@ -171,7 +288,19 @@ export default function Session() {
         .eq('session_id', sessionData.id)
         .order('created_at', { ascending: true });
 
-      if (messagesData) setMessages(messagesData as Message[]);
+      if (messagesData) {
+        setMessages(messagesData as Message[]);
+        
+        // If no messages exist, send automatic facilitator greeting
+        if (messagesData.length === 0) {
+          const greeting = `Hello everyone! Let's discuss ${sessionData.goal || 'our topic'}. Before I call in my team of agents, would anyone like to start by sharing their ideas?`;
+          await supabase.from('messages').insert({
+            session_id: sessionData.id,
+            content: greeting,
+            agent_type: 'facilitator',
+          });
+        }
+      }
 
       // Get participant count
       const { count } = await supabase
