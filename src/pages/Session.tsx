@@ -294,11 +294,15 @@ export default function Session() {
         // If no messages exist, send automatic facilitator greeting
         if (messagesData.length === 0) {
           const greeting = `Hello everyone! Let's discuss ${sessionData.goal || 'our topic'}. Before I call in my team of agents, would anyone like to start by sharing their ideas?`;
-          await supabase.from('messages').insert({
+          const { data: newMessage } = await supabase.from('messages').insert({
             session_id: sessionData.id,
             content: greeting,
             agent_type: 'facilitator',
-          });
+          }).select().single();
+          
+          if (newMessage) {
+            setMessages([newMessage as Message]);
+          }
         }
       }
 
