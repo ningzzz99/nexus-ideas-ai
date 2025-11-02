@@ -24,11 +24,11 @@ export default function Home() {
       setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user ?? null);
-      }
-    );
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
 
     return () => subscription.unsubscribe();
   }, []);
@@ -40,7 +40,7 @@ export default function Home() {
     setCreating(true);
     try {
       const { data, error } = await supabase
-        .from('sessions')
+        .from("sessions")
         .insert({
           title: title.trim(),
           goal: goal.trim() || null,
@@ -148,18 +148,14 @@ export default function Home() {
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-2xl space-y-6">
         <div className="text-center">
-          <h1 className="text-4xl font-bold mb-2">Start a Brainstorm Session</h1>
-          <p className="text-muted-foreground">
-            Create a session and invite AI agents to collaborate
-          </p>
+          <h1 className="text-4xl font-bold mb-2">Start the IdeaNet</h1>
+          <p className="text-muted-foreground">Create a session and invite AI agents to collaborate</p>
         </div>
 
         <Card>
           <CardHeader>
             <CardTitle>New Session</CardTitle>
-            <CardDescription>
-              Set your goal and invite team members with a shareable link
-            </CardDescription>
+            <CardDescription>Set your goal and invite team members with a shareable link</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleCreateSession} className="space-y-4">
