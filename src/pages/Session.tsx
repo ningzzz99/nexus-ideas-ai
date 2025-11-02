@@ -47,6 +47,8 @@ export default function Session() {
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastActivityRef = useRef<Date>(new Date());
   const lastAgentCalledRef = useRef<'spark' | 'probe'>('probe');
+  const anchorReminderSentRef = useRef(false);
+  const anchorSummaryPromptSentRef = useRef(false);
 
   useEffect(() => {
     loadSession();
@@ -88,59 +90,67 @@ export default function Session() {
       checkInactiveParticipants();
     }
 
-    // Update last activity timestamp
-    if (messages.length > 0) {
+    // Update last activity timestamp only for user messages
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage && lastMessage.agent_type === 'user') {
       lastActivityRef.current = new Date();
+      console.log('User activity detected, resetting inactivity timer');
     }
 
     // Trigger Anchor interventions based on message count
-    if (messages.length === 15) {
+    if (messages.length >= 15 && !anchorReminderSentRef.current) {
       triggerAnchorReminder();
-    } else if (messages.length === 30) {
+      anchorReminderSentRef.current = true;
+    }
+    if (messages.length >= 30 && !anchorSummaryPromptSentRef.current) {
       triggerAnchorSummaryPrompt();
+      anchorSummaryPromptSentRef.current = true;
     }
   }, [messages]);
 
-  // Inactivity monitoring
+  // Inactivity monitoring - start once and keep running
   useEffect(() => {
-    if (!session || messages.length === 0) return;
+    if (!session) return;
 
-    // Clear existing timer
-    if (inactivityTimerRef.current) {
-      clearInterval(inactivityTimerRef.current);
-    }
+    console.log('Starting inactivity monitor');
 
-    // Check inactivity every 30 seconds
+    // Check inactivity every 10 seconds for more responsive behavior
     inactivityTimerRef.current = setInterval(() => {
       const now = new Date();
       const timeSinceLastActivity = (now.getTime() - lastActivityRef.current.getTime()) / 1000;
+
+      console.log(`Time since last activity: ${timeSinceLastActivity}s`);
 
       // Check if it's been 1 minute since the facilitator's initial greeting (only user messages)
       const userMessages = messages.filter(m => m.agent_type === 'user');
       const facilitatorMessages = messages.filter(m => m.agent_type === 'facilitator');
       
-      if (facilitatorMessages.length === 1 && userMessages.length === 0 && timeSinceLastActivity > 60) {
+      if (facilitatorMessages.length === 1 && userMessages.length === 0 && timeSinceLastActivity >= 60) {
+        console.log('Triggering Spark after 1 minute of no user response');
         triggerSparkToStart();
         lastActivityRef.current = now; // Reset timer after triggering
       }
       // Check if it's been 2 minutes of general inactivity
-      else if (timeSinceLastActivity > 120) {
+      else if (messages.length > 1 && timeSinceLastActivity >= 120) {
+        console.log('Triggering agent for 2 minutes of inactivity');
         triggerAgentForInactivity();
         lastActivityRef.current = now; // Reset timer after triggering
       }
-    }, 30000); // Check every 30 seconds
+    }, 10000); // Check every 10 seconds
 
     return () => {
       if (inactivityTimerRef.current) {
+        console.log('Clearing inactivity monitor');
         clearInterval(inactivityTimerRef.current);
       }
     };
-  }, [session, messages]);
+  }, [session]); // Only depend on session, not messages
 
   const triggerSparkToStart = async () => {
     if (!session) return;
     
     try {
+      console.log('Calling Spark to start the discussion');
       const conversationHistory = messages.map((msg) => ({
         role: msg.agent_type === 'user' ? 'user' : 'assistant',
         content: msg.content,
@@ -159,6 +169,8 @@ export default function Session() {
       // Alternate between Spark and Probe
       const nextAgent = lastAgentCalledRef.current === 'spark' ? 'probe' : 'spark';
       lastAgentCalledRef.current = nextAgent;
+
+      console.log(`Calling ${nextAgent} due to inactivity`);
 
       const conversationHistory = messages.map((msg) => ({
         role: msg.agent_type === 'user' ? 'user' : 'assistant',
@@ -179,6 +191,7 @@ export default function Session() {
     if (!session) return;
     
     try {
+      console.log('Anchor sending goal alignment reminder at 15 messages');
       await supabase.from('messages').insert({
         session_id: session.id,
         content: `Great discussion so far! Let me remind everyone - our goal is: "${session.goal || 'our main objective'}". Are we still aligned with this goal? Let's make sure our ideas are serving this purpose.`,
@@ -193,6 +206,7 @@ export default function Session() {
     if (!session) return;
     
     try {
+      console.log('Anchor prompting for summary at 30 messages');
       await supabase.from('messages').insert({
         session_id: session.id,
         content: `We've had a robust discussion with many ideas on the table! I'm wondering - are we ready to start summarizing our key insights? Or should we narrow down to the most promising ideas that align with our goal: "${session.goal || 'our objective'}"?`,
