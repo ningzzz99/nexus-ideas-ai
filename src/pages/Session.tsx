@@ -16,7 +16,7 @@ import { SessionSummaryDialog } from "@/components/brainstorm/SessionSummaryDial
 type Message = {
   id: string;
   content: string;
-  agent_type: 'spark' | 'probe' | 'facilitator' | 'anchor' | 'user';
+  agent_type: "spark" | "probe" | "facilitator" | "anchor" | "user";
   created_at: string;
   is_anonymous: boolean;
   user_id?: string;
@@ -46,7 +46,7 @@ export default function Session() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastActivityRef = useRef<Date>(new Date());
-  const lastAgentCalledRef = useRef<'spark' | 'probe'>('probe');
+  const lastAgentCalledRef = useRef<"spark" | "probe">("probe");
   const anchorReminderSentRef = useRef(false);
   const anchorSummaryPromptSentRef = useRef(false);
 
@@ -61,16 +61,16 @@ export default function Session() {
     const channel = supabase
       .channel(`session-${session.id}`)
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
           filter: `session_id=eq.${session.id}`,
         },
         (payload) => {
           setMessages((prev) => [...prev, payload.new as Message]);
-        }
+        },
       )
       .subscribe();
 
@@ -82,7 +82,7 @@ export default function Session() {
   useEffect(() => {
     // Scroll to bottom when new messages arrive
     if (scrollRef.current) {
-      scrollRef.current.scrollIntoView({ behavior: 'smooth' });
+      scrollRef.current.scrollIntoView({ behavior: "smooth" });
     }
 
     // Track inactive participants every 10 messages
@@ -92,13 +92,13 @@ export default function Session() {
 
     // Update last activity timestamp only for user messages
     const lastMessage = messages[messages.length - 1];
-    if (lastMessage && lastMessage.agent_type === 'user') {
+    if (lastMessage && lastMessage.agent_type === "user") {
       lastActivityRef.current = new Date();
-      console.log('User activity detected, resetting inactivity timer');
+      console.log("User activity detected, resetting inactivity timer");
     }
 
     // Trigger Anchor interventions based on message count
-    if (messages.length >= 15 && !anchorReminderSentRef.current) {
+    if (messages.length >= 10 && !anchorReminderSentRef.current) {
       triggerAnchorReminder();
       anchorReminderSentRef.current = true;
     }
@@ -112,7 +112,7 @@ export default function Session() {
   useEffect(() => {
     if (!session) return;
 
-    console.log('Starting inactivity monitor');
+    console.log("Starting inactivity monitor");
 
     // Check inactivity every 10 seconds for more responsive behavior
     inactivityTimerRef.current = setInterval(() => {
@@ -122,17 +122,17 @@ export default function Session() {
       console.log(`Time since last activity: ${timeSinceLastActivity}s`);
 
       // Check if it's been 1 minute since the facilitator's initial greeting (only user messages)
-      const userMessages = messages.filter(m => m.agent_type === 'user');
-      const facilitatorMessages = messages.filter(m => m.agent_type === 'facilitator');
-      
+      const userMessages = messages.filter((m) => m.agent_type === "user");
+      const facilitatorMessages = messages.filter((m) => m.agent_type === "facilitator");
+
       if (facilitatorMessages.length === 1 && userMessages.length === 0 && timeSinceLastActivity >= 60) {
-        console.log('Triggering Spark after 1 minute of no user response');
+        console.log("Triggering Spark after 1 minute of no user response");
         triggerSparkToStart();
         lastActivityRef.current = now; // Reset timer after triggering
       }
       // Check if it's been 2 minutes of general inactivity
       else if (messages.length > 1 && timeSinceLastActivity >= 120) {
-        console.log('Triggering agent for 2 minutes of inactivity');
+        console.log("Triggering agent for 2 minutes of inactivity");
         triggerAgentForInactivity();
         lastActivityRef.current = now; // Reset timer after triggering
       }
@@ -140,7 +140,7 @@ export default function Session() {
 
     return () => {
       if (inactivityTimerRef.current) {
-        console.log('Clearing inactivity monitor');
+        console.log("Clearing inactivity monitor");
         clearInterval(inactivityTimerRef.current);
       }
     };
@@ -148,72 +148,73 @@ export default function Session() {
 
   const triggerSparkToStart = async () => {
     if (!session) return;
-    
+
     try {
-      console.log('Calling Spark to start the discussion');
+      console.log("Calling Spark to start the discussion");
       const conversationHistory = messages.map((msg) => ({
-        role: msg.agent_type === 'user' ? 'user' : 'assistant',
+        role: msg.agent_type === "user" ? "user" : "assistant",
         content: msg.content,
       }));
 
-      await callAgent('spark', 'Please share some initial creative ideas to get us started!', conversationHistory);
+      await callAgent("spark", "Please share some initial creative ideas to get us started!", conversationHistory);
     } catch (error) {
-      console.error('Error triggering Spark:', error);
+      console.error("Error triggering Spark:", error);
     }
   };
 
   const triggerAgentForInactivity = async () => {
     if (!session) return;
-    
+
     try {
       // Alternate between Spark and Probe
-      const nextAgent = lastAgentCalledRef.current === 'spark' ? 'probe' : 'spark';
+      const nextAgent = lastAgentCalledRef.current === "spark" ? "probe" : "spark";
       lastAgentCalledRef.current = nextAgent;
 
       console.log(`Calling ${nextAgent} due to inactivity`);
 
       const conversationHistory = messages.map((msg) => ({
-        role: msg.agent_type === 'user' ? 'user' : 'assistant',
+        role: msg.agent_type === "user" ? "user" : "assistant",
         content: msg.content,
       }));
 
-      const message = nextAgent === 'spark' 
-        ? 'The conversation has slowed down. Please contribute a fresh, creative idea to re-energize the discussion!'
-        : 'The conversation has slowed down. Please challenge an existing idea or ask a critical question to deepen the discussion!';
+      const message =
+        nextAgent === "spark"
+          ? "The conversation has slowed down. Please contribute a fresh, creative idea to re-energize the discussion!"
+          : "The conversation has slowed down. Please challenge an existing idea or ask a critical question to deepen the discussion!";
 
       await callAgent(nextAgent, message, conversationHistory);
     } catch (error) {
-      console.error('Error triggering agent for inactivity:', error);
+      console.error("Error triggering agent for inactivity:", error);
     }
   };
 
   const triggerAnchorReminder = async () => {
     if (!session) return;
-    
+
     try {
-      console.log('Anchor sending goal alignment reminder at 15 messages');
-      await supabase.from('messages').insert({
+      console.log("Anchor sending goal alignment reminder at 15 messages");
+      await supabase.from("messages").insert({
         session_id: session.id,
-        content: `Great discussion so far! Let me remind everyone - our goal is: "${session.goal || 'our main objective'}". Are we still aligned with this goal? Let's make sure our ideas are serving this purpose.`,
-        agent_type: 'anchor',
+        content: `Great discussion so far! Let me remind everyone - our goal is: "${session.goal || "our main objective"}". Are we still aligned with this goal? Let's make sure our ideas are serving this purpose.`,
+        agent_type: "anchor",
       });
     } catch (error) {
-      console.error('Error triggering Anchor reminder:', error);
+      console.error("Error triggering Anchor reminder:", error);
     }
   };
 
   const triggerAnchorSummaryPrompt = async () => {
     if (!session) return;
-    
+
     try {
-      console.log('Anchor prompting for summary at 30 messages');
-      await supabase.from('messages').insert({
+      console.log("Anchor prompting for summary at 30 messages");
+      await supabase.from("messages").insert({
         session_id: session.id,
-        content: `We've had a robust discussion with many ideas on the table! I'm wondering - are we ready to start summarizing our key insights? Or should we narrow down to the most promising ideas that align with our goal: "${session.goal || 'our objective'}"?`,
-        agent_type: 'anchor',
+        content: `We've had a robust discussion with many ideas on the table! I'm wondering - are we ready to start summarizing our key insights? Or should we narrow down to the most promising ideas that align with our goal: "${session.goal || "our objective"}"?`,
+        agent_type: "anchor",
       });
     } catch (error) {
-      console.error('Error triggering Anchor summary prompt:', error);
+      console.error("Error triggering Anchor summary prompt:", error);
     }
   };
 
@@ -221,14 +222,16 @@ export default function Session() {
     if (!session) return;
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       // Get all participants
       const { data: participants } = await supabase
-        .from('session_participants')
-        .select('user_id, profiles(display_name)')
-        .eq('session_id', session.id);
+        .from("session_participants")
+        .select("user_id, profiles(display_name)")
+        .eq("session_id", session.id);
 
       if (!participants) return;
 
@@ -236,84 +239,86 @@ export default function Session() {
       const recentMessages = messages.slice(-10);
       const recentUserIds = new Set(
         recentMessages
-          .filter((m) => m.agent_type === 'user' && !m.is_anonymous)
+          .filter((m) => m.agent_type === "user" && !m.is_anonymous)
           .map((m) => m.user_id)
-          .filter(Boolean)
+          .filter(Boolean),
       );
 
       // Find inactive participants
-      const inactiveParticipants = participants.filter(
-        (p) => p.user_id !== user.id && !recentUserIds.has(p.user_id)
-      );
+      const inactiveParticipants = participants.filter((p) => p.user_id !== user.id && !recentUserIds.has(p.user_id));
 
       // Have facilitator engage each inactive participant
       for (const participant of inactiveParticipants) {
-        const displayName = (participant.profiles as any)?.display_name || 'team member';
-        
-        await supabase.from('messages').insert({
+        const displayName = (participant.profiles as any)?.display_name || "team member";
+
+        await supabase.from("messages").insert({
           session_id: session.id,
-          content: `@${displayName} - I'd love to hear your thoughts! What ideas do you have about ${session.goal || 'this topic'}? Any perspectives you'd like to share?`,
-          agent_type: 'facilitator',
+          content: `@${displayName} - I'd love to hear your thoughts! What ideas do you have about ${session.goal || "this topic"}? Any perspectives you'd like to share?`,
+          agent_type: "facilitator",
         });
       }
     } catch (error) {
-      console.error('Error checking inactive participants:', error);
+      console.error("Error checking inactive participants:", error);
     }
   };
 
   const loadSession = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
-        navigate('/');
+        navigate("/");
         return;
       }
 
       // Get session
       const { data: sessionData, error: sessionError } = await supabase
-        .from('sessions')
-        .select('*')
-        .eq('session_url', sessionUrl)
+        .from("sessions")
+        .select("*")
+        .eq("session_url", sessionUrl)
         .maybeSingle();
 
       if (sessionError) throw sessionError;
-      
+
       if (!sessionData) {
         toast({
           title: "Session not found",
           description: "This session doesn't exist or the link is invalid.",
           variant: "destructive",
         });
-        navigate('/');
+        navigate("/");
         return;
       }
-      
+
       setSession(sessionData);
 
       // Join session as participant
-      await supabase
-        .from('session_participants')
-        .upsert({ session_id: sessionData.id, user_id: user.id });
+      await supabase.from("session_participants").upsert({ session_id: sessionData.id, user_id: user.id });
 
       // Load messages
       const { data: messagesData } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('session_id', sessionData.id)
-        .order('created_at', { ascending: true });
+        .from("messages")
+        .select("*")
+        .eq("session_id", sessionData.id)
+        .order("created_at", { ascending: true });
 
       if (messagesData) {
         setMessages(messagesData as Message[]);
-        
+
         // If no messages exist, send automatic facilitator greeting
         if (messagesData.length === 0) {
-          const greeting = `Hello everyone! Let's discuss ${sessionData.goal || 'our topic'}. Before I call in my team of agents, would anyone like to start by sharing their ideas?`;
-          const { data: newMessage } = await supabase.from('messages').insert({
-            session_id: sessionData.id,
-            content: greeting,
-            agent_type: 'facilitator',
-          }).select().single();
-          
+          const greeting = `Hello everyone! Let's discuss ${sessionData.goal || "our topic"}. Before I call in my team of agents, would anyone like to start by sharing their ideas?`;
+          const { data: newMessage } = await supabase
+            .from("messages")
+            .insert({
+              session_id: sessionData.id,
+              content: greeting,
+              agent_type: "facilitator",
+            })
+            .select()
+            .single();
+
           if (newMessage) {
             setMessages([newMessage as Message]);
           }
@@ -322,12 +327,11 @@ export default function Session() {
 
       // Get participant count
       const { count } = await supabase
-        .from('session_participants')
-        .select('*', { count: 'exact', head: true })
-        .eq('session_id', sessionData.id);
+        .from("session_participants")
+        .select("*", { count: "exact", head: true })
+        .eq("session_id", sessionData.id);
 
       if (count) setParticipantCount(count);
-
     } catch (error: any) {
       toast({
         title: "Error loading session",
@@ -341,21 +345,21 @@ export default function Session() {
 
   const detectAgent = (message: string): string | null => {
     const lowerMessage = message.toLowerCase();
-    if (lowerMessage.includes('@spark')) return 'spark';
-    if (lowerMessage.includes('@probe')) return 'probe';
-    if (lowerMessage.includes('@facilitator')) return 'facilitator';
-    if (lowerMessage.includes('@anchor')) return 'anchor';
+    if (lowerMessage.includes("@spark")) return "spark";
+    if (lowerMessage.includes("@probe")) return "probe";
+    if (lowerMessage.includes("@facilitator")) return "facilitator";
+    if (lowerMessage.includes("@anchor")) return "anchor";
     return null;
   };
 
   const extractConcepts = async (messageContent: string, agentType: string, messageId: string) => {
     try {
       const { data: existingNodes } = await supabase
-        .from('mind_map_nodes')
-        .select('label')
-        .eq('session_id', session!.id);
+        .from("mind_map_nodes")
+        .select("label")
+        .eq("session_id", session!.id);
 
-      const { data, error } = await supabase.functions.invoke('extract-concepts', {
+      const { data, error } = await supabase.functions.invoke("extract-concepts", {
         body: {
           message: messageContent,
           agentType,
@@ -373,10 +377,10 @@ export default function Session() {
           // If this concept has parent connections, position it near the parent
           if (concept.connections?.length > 0) {
             const { data: parentNodes } = await supabase
-              .from('mind_map_nodes')
-              .select('x_position, y_position')
-              .eq('session_id', session!.id)
-              .in('label', concept.connections);
+              .from("mind_map_nodes")
+              .select("x_position, y_position")
+              .eq("session_id", session!.id)
+              .in("label", concept.connections);
 
             if (parentNodes && parentNodes.length > 0) {
               // Position near the first parent with some offset
@@ -386,26 +390,24 @@ export default function Session() {
             }
           }
 
-          await supabase
-            .from('mind_map_nodes')
-            .insert({
-              session_id: session!.id,
-              label: concept.label,
-              x_position: nodeX,
-              y_position: nodeY,
-              agent_type: agentType,
-              message_id: messageId,
-            });
+          await supabase.from("mind_map_nodes").insert({
+            session_id: session!.id,
+            label: concept.label,
+            x_position: nodeX,
+            y_position: nodeY,
+            agent_type: agentType,
+            message_id: messageId,
+          });
         }
       }
     } catch (error: any) {
-      console.error('Error extracting concepts:', error);
+      console.error("Error extracting concepts:", error);
     }
   };
 
   const callAgent = async (agent: string, userMessage: string, conversationHistory: any[]) => {
     try {
-      const { data, error } = await supabase.functions.invoke('chat-agent', {
+      const { data, error } = await supabase.functions.invoke("chat-agent", {
         body: {
           agent,
           message: userMessage,
@@ -416,18 +418,21 @@ export default function Session() {
 
       if (error) throw error;
 
-      const { data: savedMessage } = await supabase.from('messages').insert({
-        session_id: session!.id,
-        content: data.reply,
-        agent_type: agent,
-      }).select().single();
+      const { data: savedMessage } = await supabase
+        .from("messages")
+        .insert({
+          session_id: session!.id,
+          content: data.reply,
+          agent_type: agent,
+        })
+        .select()
+        .single();
 
       if (savedMessage) {
         await extractConcepts(data.reply, agent, savedMessage.id);
       }
-
     } catch (error: any) {
-      console.error('Error calling agent:', error);
+      console.error("Error calling agent:", error);
       toast({
         title: "Agent error",
         description: "Failed to get response from " + agent,
@@ -441,14 +446,16 @@ export default function Session() {
 
     setSending(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
 
       // Save user message
-      await supabase.from('messages').insert({
+      await supabase.from("messages").insert({
         session_id: session.id,
         content,
-        agent_type: 'user',
+        agent_type: "user",
         user_id: user.id,
       });
 
@@ -457,13 +464,12 @@ export default function Session() {
       if (mentionedAgent) {
         // Build conversation history
         const conversationHistory = messages.map((msg) => ({
-          role: msg.agent_type === 'user' ? 'user' : 'assistant',
+          role: msg.agent_type === "user" ? "user" : "assistant",
           content: msg.content,
         }));
 
         await callAgent(mentionedAgent, content, conversationHistory);
       }
-
     } catch (error: any) {
       toast({
         title: "Error",
@@ -480,19 +486,21 @@ export default function Session() {
 
     setSending(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
 
       // Build conversation history
       const conversationHistory = messages.map((msg) => ({
-        role: msg.agent_type === 'user' ? 'user' : 'assistant',
+        role: msg.agent_type === "user" ? "user" : "assistant",
         content: msg.content,
       }));
 
       // Call facilitator to post anonymously
-      const { data, error } = await supabase.functions.invoke('chat-agent', {
+      const { data, error } = await supabase.functions.invoke("chat-agent", {
         body: {
-          agent: 'facilitator',
+          agent: "facilitator",
           message: content,
           conversationHistory: conversationHistory.slice(-10),
           goal: session.goal,
@@ -503,10 +511,10 @@ export default function Session() {
       if (error) throw error;
 
       // Save the anonymous message as a user message
-      await supabase.from('messages').insert({
+      await supabase.from("messages").insert({
         session_id: session.id,
         content: data.reply,
-        agent_type: 'user',
+        agent_type: "user",
         is_anonymous: true,
       });
 
@@ -514,7 +522,6 @@ export default function Session() {
         title: "Idea shared anonymously",
         description: "The Facilitator has posted your idea to the chat.",
       });
-
     } catch (error: any) {
       toast({
         title: "Error sending DM",
@@ -550,15 +557,15 @@ export default function Session() {
         description: "Please wait while the AI analyzes the session",
       });
 
-      const { data, error } = await supabase.functions.invoke('generate-session-summary', {
-        body: { 
+      const { data, error } = await supabase.functions.invoke("generate-session-summary", {
+        body: {
           sessionId: session.id,
-          mindMapImage 
-        }
+          mindMapImage,
+        },
       });
 
       if (error) {
-        console.error('Error generating summary:', error);
+        console.error("Error generating summary:", error);
         toast({
           title: "Warning",
           description: "Could not generate session summary, but session will be ended",
@@ -572,19 +579,16 @@ export default function Session() {
       }
 
       // Update session status
-      await supabase
-        .from('sessions')
-        .update({ status: 'ended' })
-        .eq('id', session.id);
+      await supabase.from("sessions").update({ status: "ended" }).eq("id", session.id);
 
       toast({ title: "Session ended" });
-      
+
       // Wait a moment for the summary to be fully saved, then show dialog
       setTimeout(() => {
         setShowSummaryDialog(true);
       }, 1000);
     } catch (error: any) {
-      console.error('Error ending session:', error);
+      console.error("Error ending session:", error);
       toast({
         title: "Error",
         description: error.message,
@@ -632,11 +636,7 @@ export default function Session() {
         <div className="border-t bg-card p-4">
           <div className="max-w-4xl mx-auto space-y-3">
             <div className="flex gap-2 justify-end">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowSummaryDialog(true)}
-              >
+              <Button variant="outline" size="sm" onClick={() => setShowSummaryDialog(true)}>
                 <FileText className="h-4 w-4 mr-2" />
                 View Summary
               </Button>
@@ -662,8 +662,8 @@ export default function Session() {
             </Button>
           </div>
           <div className="flex-1">
-            <MindMap 
-              sessionId={session.id} 
+            <MindMap
+              sessionId={session.id}
               sessionGoal={session.goal}
               sessionTitle={session.title}
               onExportImage={mindMapExportRef}
@@ -673,11 +673,7 @@ export default function Session() {
       )}
 
       {!showMindMap && (
-        <Button
-          className="fixed right-4 bottom-20"
-          size="lg"
-          onClick={() => setShowMindMap(true)}
-        >
+        <Button className="fixed right-4 bottom-20" size="lg" onClick={() => setShowMindMap(true)}>
           <Brain className="h-5 w-5 mr-2" />
           Show Mind Map
         </Button>
